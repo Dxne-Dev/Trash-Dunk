@@ -896,47 +896,43 @@ export function Arena({
               }`
         }`}
       >
-        {/* ---------- SCOREBUG ---------- */}
-        <div
-          className={`relative flex flex-wrap items-stretch gap-px text-chalk ${
-            transparent
-              ? "rounded-xl border border-arena-700/80 bg-arena-950/90 shadow-xl"
-              : "border-b border-arena-700/70 bg-arena-950/80"
-          }`}
-        >
-          <div className="flex items-center gap-2.5 bg-dunk-600 px-3 py-2 sm:px-4">
-            <span className="display text-[19px] leading-none tracking-wide text-white sm:text-[23px]">
-              Trash<span className="text-arena-950">Dunk</span>
-            </span>
-          </div>
+        {/* ---------- SCOREBUG (masqué en mode minimal transparent) ---------- */}
+        {!transparent && (
+          <div className="relative flex flex-wrap items-stretch gap-px border-b border-arena-700/70 bg-arena-950/80 text-chalk">
+            <div className="flex items-center gap-2.5 bg-dunk-600 px-3 py-2 sm:px-4">
+              <span className="display text-[19px] leading-none tracking-wide text-white sm:text-[23px]">
+                Trash<span className="text-arena-950">Dunk</span>
+              </span>
+            </div>
 
-          <Stat label="Score" value={score.toLocaleString("fr-FR")} big />
-          <Stat
-            label="Streak"
-            value={`${streak}`}
-            suffix={mult > 1 ? `×${mult}` : undefined}
-            accent={
-              colorMode === "ice" ? "#6fd3ff" : colorMode === "sunset" ? "#ff4db8" : undefined
-            }
-          />
-          <Stat label="Cible" value={`${target}`} suffix="%" accent="#43e39b" />
-          <Stat label="Restants" value={`${queue.length}`} />
-          <Stat label="Corbeille" value={`${trashed.length}`} accent="#6fd3ff" />
+            <Stat label="Score" value={score.toLocaleString("fr-FR")} big />
+            <Stat
+              label="Streak"
+              value={`${streak}`}
+              suffix={mult > 1 ? `×${mult}` : undefined}
+              accent={
+                colorMode === "ice" ? "#6fd3ff" : colorMode === "sunset" ? "#ff4db8" : undefined
+              }
+            />
+            <Stat label="Cible" value={`${target}`} suffix="%" accent="#43e39b" />
+            <Stat label="Restants" value={`${queue.length}`} />
+            <Stat label="Corbeille" value={`${trashed.length}`} accent="#6fd3ff" />
 
-          <div className="ml-auto flex items-center gap-2 px-3">
-            <button
-              onClick={() => {
-                sfx.unlock();
-                d.toggleSound();
-              }}
-              className="group flex items-center gap-1.5 rounded-md border border-arena-600 bg-arena-850 px-2.5 py-1.5 text-[11px] font-medium text-chalk-dim transition hover:border-dunk-500 hover:text-chalk"
-              aria-pressed={soundOn}
-            >
-              <SoundIcon on={soundOn} />
-              <span className="hidden sm:inline">{soundOn ? "Son activé" : "Muet"}</span>
-            </button>
+            <div className="ml-auto flex items-center gap-2 px-3">
+              <button
+                onClick={() => {
+                  sfx.unlock();
+                  d.toggleSound();
+                }}
+                className="group flex items-center gap-1.5 rounded-md border border-arena-600 bg-arena-850 px-2.5 py-1.5 text-[11px] font-medium text-chalk-dim transition hover:border-dunk-500 hover:text-chalk"
+                aria-pressed={soundOn}
+              >
+                <SoundIcon on={soundOn} />
+                <span className="hidden sm:inline">{soundOn ? "Son activé" : "Muet"}</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ---------- TERRAIN ---------- */}
         <div
@@ -1251,8 +1247,14 @@ export function Arena({
           </div>
         </div>
 
-        {/* ---------- CONTRÔLES ---------- */}
-        <div className="flex flex-col gap-3 border-t border-arena-700/70 bg-arena-950/70 p-3 lg:flex-row lg:items-center lg:gap-5 lg:p-4">
+        {/* ---------- CONTRÔLES (simplifié en mode transparent : juste la file d'attente) ---------- */}
+        <div
+          className={`flex flex-col gap-3 p-3 lg:flex-row lg:items-center lg:gap-5 lg:p-4 ${
+            transparent
+              ? "rounded-xl border border-arena-700/60 bg-arena-950/85 backdrop-blur-sm"
+              : "border-t border-arena-700/70 bg-arena-950/70"
+          }`}
+        >
           <div className="min-w-0 flex-1">
             <div className="display mb-1.5 text-[12px] tracking-[0.24em] text-chalk-dim/70">File d'attente</div>
             <div className="flex flex-wrap items-center gap-1.5">
@@ -1278,80 +1280,84 @@ export function Arena({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="mr-1 flex items-center gap-2">
-              <span className="text-[10px] tracking-[0.16em] text-chalk-dim/60 uppercase">Jauge</span>
-              <div className="flex overflow-hidden rounded-md border border-arena-600">
-                {(Object.keys(DIFF) as Array<keyof typeof DIFF>).map((k) => (
-                  <button
-                    key={k}
-                    title={DIFF[k].note}
-                    onClick={() => {
-                      sfx.play("ui");
-                      setDifficulty(k);
-                    }}
-                    className={`px-2.5 py-1.5 text-[11px] font-semibold transition ${
-                      difficulty === k
-                        ? "bg-dunk-500 text-white"
-                        : "bg-arena-850 text-chalk-dim hover:bg-arena-800 hover:text-chalk"
-                    }`}
-                  >
-                    {DIFF[k].label}
-                  </button>
-                ))}
+          {!transparent && (
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="mr-1 flex items-center gap-2">
+                <span className="text-[10px] tracking-[0.16em] text-chalk-dim/60 uppercase">Jauge</span>
+                <div className="flex overflow-hidden rounded-md border border-arena-600">
+                  {(Object.keys(DIFF) as Array<keyof typeof DIFF>).map((k) => (
+                    <button
+                      key={k}
+                      title={DIFF[k].note}
+                      onClick={() => {
+                        sfx.play("ui");
+                        setDifficulty(k);
+                      }}
+                      className={`px-2.5 py-1.5 text-[11px] font-semibold transition ${
+                        difficulty === k
+                          ? "bg-dunk-500 text-white"
+                          : "bg-arena-850 text-chalk-dim hover:bg-arena-800 hover:text-chalk"
+                      }`}
+                    >
+                      {DIFF[k].label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="mr-1 hidden text-right sm:block">
-              <div className="tnum display text-[24px] leading-none text-chalk">{accuracy}%</div>
-              <div className="text-[10px] tracking-wider text-chalk-dim/70 uppercase">
-                swish · {airballs} air ball{airballs > 1 ? "s" : ""}
+              <div className="mr-1 hidden text-right sm:block">
+                <div className="tnum display text-[24px] leading-none text-chalk">{accuracy}%</div>
+                <div className="text-[10px] tracking-wider text-chalk-dim/70 uppercase">
+                  swish · {airballs} air ball{airballs > 1 ? "s" : ""}
+                </div>
               </div>
+              <Btn onClick={() => { sfx.play("ui"); d.skipActive(); }} disabled={!queue.length}>
+                Passer
+              </Btn>
+              <Btn onClick={() => { sfx.play("ui"); d.refill(5); }}>+ 5 fichiers</Btn>
+              <Btn
+                onClick={() => {
+                  sfx.play("error");
+                  resetColorState();
+                  d.cancelSession();
+                  window.setTimeout(() => d.refill(5), 700);
+                }}
+                disabled={!queue.length}
+                danger
+              >
+                Annuler <span className="ml-1 rounded border border-current/40 px-1 text-[9px] opacity-70">Échap</span>
+              </Btn>
             </div>
-            <Btn onClick={() => { sfx.play("ui"); d.skipActive(); }} disabled={!queue.length}>
-              Passer
-            </Btn>
-            <Btn onClick={() => { sfx.play("ui"); d.refill(5); }}>+ 5 fichiers</Btn>
-            <Btn
-              onClick={() => {
-                sfx.play("error");
-                resetColorState();
-                d.cancelSession();
-                window.setTimeout(() => d.refill(5), 700);
-              }}
-              disabled={!queue.length}
-              danger
-            >
-              Annuler <span className="ml-1 rounded border border-current/40 px-1 text-[9px] opacity-70">Échap</span>
-            </Btn>
-          </div>
+          )}
         </div>
       </div>
 
-      <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[11px] text-chalk-dim/70">
-        <span className="flex items-center gap-1.5">
-          <Dot c="#43e39b" /> swish ≤ 2 %
-        </span>
-        <span className="flex items-center gap-1.5">
-          <Dot c="#f6c453" /> panier ≤ 8 %
-        </span>
-        <span className="flex items-center gap-1.5">
-          <Dot c="#ea5a24" /> rebond ≤ 15 %
-        </span>
-        <span className="flex items-center gap-1.5">
-          <Dot c="#ff4f5a" /> air ball &gt; 15 %
-        </span>
-        <span className="flex items-center gap-1.5 text-sky-300/85">
-          <Dot c="#5ec8ff" /> 2 swishs = COLD (glace)
-        </span>
-        <span className="flex items-center gap-1.5 text-pink-300/85">
-          <Dot c="#ff4db8" /> 3 entrants = glow rouge·rose·orange
-        </span>
-        <span className="ml-auto tnum">
-          Carrière : {persisted.totalDunks} dunk{persisted.totalDunks > 1 ? "s" : ""} · record streak {persisted.bestStreak} ·{" "}
-          {persisted.sessions} session{persisted.sessions > 1 ? "s" : ""}
-        </span>
-      </p>
+      {!transparent && (
+        <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[11px] text-chalk-dim/70">
+          <span className="flex items-center gap-1.5">
+            <Dot c="#43e39b" /> swish ≤ 2 %
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Dot c="#f6c453" /> panier ≤ 8 %
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Dot c="#ea5a24" /> rebond ≤ 15 %
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Dot c="#ff4f5a" /> air ball &gt; 15 %
+          </span>
+          <span className="flex items-center gap-1.5 text-sky-300/85">
+            <Dot c="#5ec8ff" /> 2 swishs = COLD (glace)
+          </span>
+          <span className="flex items-center gap-1.5 text-pink-300/85">
+            <Dot c="#ff4db8" /> 3 entrants = glow rouge·rose·orange
+          </span>
+          <span className="ml-auto tnum">
+            Carrière : {persisted.totalDunks} dunk{persisted.totalDunks > 1 ? "s" : ""} · record streak {persisted.bestStreak} ·{" "}
+            {persisted.sessions} session{persisted.sessions > 1 ? "s" : ""}
+          </span>
+        </p>
+      )}
     </section>
   );
 }

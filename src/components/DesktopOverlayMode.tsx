@@ -25,9 +25,22 @@ export function DesktopOverlayMode() {
       }
     });
 
-    // Charger les métadonnées réelles des fichiers ciblés par le clic droit
-    invoke<TargetFile[]>("get_target_files_info").then((files) => {
-      setTargetFiles(files);
+    const refreshFiles = () => {
+      invoke<TargetFile[]>("get_target_files_info").then((files) => {
+        setTargetFiles(files);
+      });
+    };
+
+    refreshFiles();
+
+    // Écoute de l'événement Tauri quand d'autres fichiers sélectionnés arrivent en même temps
+    let unlisten: (() => void) | undefined;
+    import("@tauri-apps/api/event").then(({ listen }) => {
+      listen("trashdunk:files_updated", () => {
+        refreshFiles();
+      }).then((u) => {
+        unlisten = u;
+      });
     });
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -36,7 +49,10 @@ export function DesktopOverlayMode() {
       }
     };
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      unlisten?.();
+    };
   }, []);
 
   const handleShootSuccess = (fileName: string) => {

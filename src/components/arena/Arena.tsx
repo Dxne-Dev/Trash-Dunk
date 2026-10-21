@@ -1186,37 +1186,48 @@ export function Arena({
 
             {/* fin de session */}
             {summary && (
-              <div className="absolute inset-0 z-20 flex items-center justify-center bg-arena-950/82 p-6 backdrop-blur-[3px]">
-                <div className="anim-pop w-full max-w-md rounded-xl border border-arena-600 bg-arena-900 p-6 shadow-2xl">
-                  <div className="display text-[13px] tracking-[0.28em] text-dunk-400">Fin de session</div>
-                  <div className="display mt-1 text-[52px] leading-[0.85] text-chalk">
-                    {summary.dunks} <span className="text-swish">dunk{summary.dunks > 1 ? "s" : ""}</span>
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/75 p-6 backdrop-blur-md">
+                <div className="anim-pop w-full max-w-md rounded-2xl border border-arena-600 bg-arena-950 p-6 shadow-2xl text-center">
+                  <div className="display text-[13px] tracking-[0.28em] text-dunk-400 uppercase">
+                    Session terminée
                   </div>
-                  <p className="mt-2 text-sm text-chalk-dim">
-                    Déplacés vers la corbeille Windows — récupérables tant qu'elle n'est pas vidée.
+                  <div className="display mt-2 text-[48px] leading-none text-chalk">
+                    {trashed.length} <span className="text-swish">fichier{trashed.length > 1 ? "s" : ""} supprimé{trashed.length > 1 ? "s" : ""}</span>
+                  </div>
+                  <p className="mt-2 text-xs text-chalk-dim">
+                    Envoyé{trashed.length > 1 ? "s" : ""} dans la corbeille Windows native. Récupérable{trashed.length > 1 ? "s" : ""} à tout moment.
                   </p>
-                  <div className="mt-5 grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-arena-700 bg-arena-700">
-                    <Mini label="Score" value={summary.score.toLocaleString("fr-FR")} />
-                    <Mini label="Meilleur streak" value={`${summary.streak}`} />
-                    <Mini label="Swishs" value={`${summary.swishes}`} />
+                  <div className="mt-5 grid grid-cols-2 gap-2 overflow-hidden rounded-lg border border-arena-800 bg-arena-900/80 p-2">
+                    <Mini label="Swishs réussis" value={`${swishes}`} />
+                    <Mini label="Score total" value={score.toLocaleString("fr-FR")} />
                   </div>
-                  <div className="mt-5 flex flex-wrap gap-2">
+                  <div className="mt-6 flex flex-wrap gap-2.5">
                     <button
                       onClick={() => {
                         sfx.play("ui");
-                        d.dismissSummary();
-                        d.refill(5);
+                        if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+                          import("@tauri-apps/api/core").then(({ invoke }) => {
+                            invoke("open_recycle_bin");
+                            invoke("close_overlay");
+                          });
+                        }
                       }}
-                      className="display flex-1 rounded-lg bg-dunk-500 px-4 py-3 text-[20px] tracking-wide text-white transition hover:bg-dunk-400 active:scale-[.98]"
+                      className="flex-1 rounded-lg bg-swish/20 border border-swish/50 px-4 py-3 text-xs font-bold text-swish transition hover:bg-swish/30 active:scale-95"
                     >
-                      Nouvelle session
+                      🗑️ Ouvrir la corbeille
                     </button>
                     <button
                       onClick={() => {
                         sfx.play("ui");
-                        d.dismissSummary();
+                        if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+                          import("@tauri-apps/api/core").then(({ invoke }) => {
+                            invoke("close_overlay");
+                          });
+                        } else {
+                          d.dismissSummary();
+                        }
                       }}
-                      className="rounded-lg border border-arena-600 px-4 py-3 text-sm text-chalk-dim transition hover:border-chalk/40 hover:text-chalk"
+                      className="rounded-lg bg-dunk-500 px-5 py-3 text-xs font-bold text-white transition hover:bg-dunk-400 active:scale-95"
                     >
                       Fermer
                     </button>
@@ -1225,8 +1236,8 @@ export function Arena({
               </div>
             )}
 
-            {/* pas d'écran "vide" pendant les 3 s qui précèdent le résumé de fin de session */}
-            {!shownFile && !summary && !(queue.length === 0 && (trashed.length > 0 || skipped > 0)) && (
+            {/* pas d'écran "vide" en mode desktop */}
+            {!transparent && !shownFile && !summary && !(queue.length === 0 && (trashed.length > 0 || skipped > 0)) && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-arena-950/70 p-6 text-center backdrop-blur-[2px]">
                 <div className="display text-[38px] leading-none text-chalk">Bureau vide</div>
                 <p className="max-w-sm text-sm text-chalk-dim">

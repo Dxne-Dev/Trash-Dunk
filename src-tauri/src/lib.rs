@@ -1,6 +1,7 @@
+use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -10,44 +11,44 @@ use tauri_plugin_notification::NotificationExt;
 use winreg::enums::*;
 use winreg::RegKey;
 
-/// Chemin vers le bureau de l'utilisateur
-fn get_desktop_dir() -> Option<PathBuf> {
-    dirs::desktop_dir()
+#[derive(Serialize, Deserialize, Default)]
+struct AppConfig {
+    is_installed: bool,
+    is_onboarded: bool,
 }
 
-/// Étape 1 : Génération des 2 fichiers d'onboarding sur le Bureau
-#[tauri::command]
-fn start_onboarding(app: AppHandle) -> Result<Vec<String>, String> {
-    let desktop = get_desktop_dir().ok_or("Bureau introuvable")?;
-
-    let file1 = desktop.join("TrashDunk_Test_1.tmp");
-    let file2 = desktop.join("TrashDunk_Test_2.tmp");
-
-    fs::write(&file1, "Fichier temporaire 1 d'échauffement pour TrashDunk. Faites clic droit -> Dunk it 🏀 !").map_err(|e| e.to_string())?;
-    fs::write(&file2, "Fichier temporaire 2 d'échauffement pour TrashDunk. Faites clic droit -> Dunk it 🏀 !").map_err(|e| e.to_string())?;
-
-    // Notification native Windows
-    let _ = app.notification()
-        .builder()
-        .title("🏀 Bienvenue sur TrashDunk !")
-        .body("2 fichiers temporaires d'échauffement ont été placés sur votre Bureau. Faites un clic droit dessus et choisissez 'Dunk it' !")
-        .show();
-
-    Ok(vec![
-        file1.to_string_lossy().to_string(),
-        file2.to_string_lossy().to_string(),
-    ])
+fn get_config_path() -> PathBuf {
+    let mut p = dirs::config_dir().unwrap_or_else(|| PathBuf::from("."));
+    p.push("TrashDunk");
+    let _ = fs::create_dir_all(&p);
+    p.push("settings.json");
+    p
 }
 
-/// Déplacement sécurisé vers la corbeille Windows
-#[tauri::command]
-fn send_to_recycle_bin(path: String) -> Result<bool, String> {
-    trash::delete(&path).map(|_| true).map_err(|e| e.to_string())
+fn load_config() -> AppConfig {
+    let path = get_config_path();
+    if let Ok(data) = fs::read_to_string(path) {
+        serde_json::from_str(&data).unwrap_or_default()
+    } else {
+        AppConfig::default()
+    }
 }
 
-/// Enregistrement du verbe shell dans le menu contextuel Windows
+fn save_config(cfg: &AppConfig) {
+    let path = get_config_path();
+    if let Ok(data) = serde_json::to_string(cfg) {
+        let _ = fs::write(path, data);
+    }
+}
+
 #[tauri::command]
-fn register_context_menu() -> Result<bool, String> {
+fn get_app_status() -> AppConfig {
+    load_config()
+}
+
+#[tauri::command]
+fn install_service(app: AppHandle) -> Result<bool, String> {
+    // 1. Enregistrer le menu contextuel dans le registre
     let current_exe = env::current_exe().map_err(|e| e.to_string())?;
     let exe_str = current_exe.to_string_lossy().to_string();
 
@@ -65,26 +66,103 @@ fn register_context_menu() -> Result<bool, String> {
     let cmd_value = format!("\"{}\" \"%1\"", exe_str);
     cmd_key.set_value("", &cmd_value).map_err(|e| e.to_string())?;
 
+    // 2. Démarrage automatique Windows
+    let (run_key, _) = hkcu
+        .create_subkey(r"Software\Microsoft\Windows\CurrentVersion\Run")
+        .map_err(|e| e.to_string())?;
+    let run_cmd = format!("\"{}\" --background", exe_str);
+    let _ = run_key.set_value("TrashDunk", &run_cmd);
+
+    // 3. Sauvegarder l'état
+    let mut cfg = load_config();
+    cfg.is_installed = true;
+    save_config(&cfg);
+
+    // 4. Déclencher l'onboarding si non fait
+    if !cfg.is_onboarded {
+        trigger_onboarding_files(&app)?;
+    }
+
+    // Basculer la fenêtre en mode plein écran transparent pour le shoot
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.set_fullscreen(true);
+    }
+
     Ok(true)
 }
 
-/// Récupérer les fichiers passés en argument (via clic droit "Dunk it")
+fn trigger_onboarding_files(app: &AppHandle) -> Result<(), String> {
+    let target_dir = dirs::document_dir()
+        .or_else(dirs::desktop_dir)
+        .ok_or("Dossier introuvable")?;
+
+    let f1 = target_dir.join("Dunk_Me_1.tmp");
+    let f2 = target_dir.join("Dunk_Me_2.tmp");
+
+    let _ = fs::write(&f1, "Fichier 1 temporaire TrashDunk");
+    let _ = fs::write(&f2, "Fichier 2 temporaire TrashDunk");
+
+    let folder_name = target_dir.file_name().unwrap_or_default().to_string_lossy();
+
+    let _ = app
+        .notification()
+        .builder()
+        .title("🏀 TrashDunk : Échauffement requis !")
+        .body(format!(
+            "Dans '{}' : faites Ctrl + Clic sur [Dunk_Me_1.tmp] et [Dunk_Me_2.tmp] puis Clic Droit -> 'Dunk it 🏀' !",
+            folder_name
+        ))
+        .show();
+
+    Ok(())
+}
+
+#[tauri::command]
+fn complete_onboarding() -> bool {
+    let mut cfg = load_config();
+    cfg.is_onboarded = true;
+    save_config(&cfg);
+    true
+}
+
+#[tauri::command]
+fn send_to_recycle_bin(path: String) -> Result<bool, String> {
+    trash::delete(&path).map(|_| true).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 fn get_target_files() -> Vec<String> {
     let args: Vec<String> = env::args().collect();
     let mut files = Vec::new();
     for arg in args.into_iter().skip(1) {
-        if Path::new(&arg).exists() {
+        if !arg.starts_with("--") && std::path::Path::new(&arg).exists() {
             files.push(arg);
+        }
+    }
+    // Si aucun fichier passé et pas encore d'onboarding, on utilise les fichiers temporaires
+    if files.is_empty() {
+        let cfg = load_config();
+        if !cfg.is_onboarded {
+            if let Some(target_dir) = dirs::document_dir().or_else(dirs::desktop_dir) {
+                let f1 = target_dir.join("Dunk_Me_1.tmp");
+                let f2 = target_dir.join("Dunk_Me_2.tmp");
+                if f1.exists() {
+                    files.push(f1.to_string_lossy().to_string());
+                }
+                if f2.exists() {
+                    files.push(f2.to_string_lossy().to_string());
+                }
+            }
         }
     }
     files
 }
 
-/// Fermer ou masquer la fenêtre de jeu
 #[tauri::command]
-fn close_overlay(window: tauri::Window) {
-    let _ = window.hide();
+fn close_overlay(app: AppHandle) {
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.hide();
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -93,36 +171,25 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            Some(vec!["--minimized"]),
+            Some(vec!["--background"]),
         ))
         .setup(|app| {
-            // Enregistrement automatique du menu contextuel au lancement
-            let _ = register_context_menu();
+            let args: Vec<String> = env::args().collect();
+            let is_background = args.iter().any(|a| a == "--background");
+            let has_files = args.iter().skip(1).any(|a| !a.starts_with("--"));
 
-            // Création du Tray Menu (icône dans la zone de notification Windows)
+            // Configuration Tray Icon
             let quit_i = MenuItem::with_id(app, "quit", "Quitter TrashDunk", true, None::<&str>)?;
-            let onboard_i = MenuItem::with_id(app, "onboard", "Relancer l'échauffement", true, None::<&str>)?;
-            let show_i = MenuItem::with_id(app, "show", "Ouvrir l'arène", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&show_i, &onboard_i, &quit_i])?;
+            let menu = Menu::with_items(app, &[&quit_i])?;
 
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
-                .tooltip("TrashDunk 🏀 - Actif en arrière-plan")
-                .on_menu_event(|app, event| match event.id.as_ref() {
-                    "quit" => {
+                .tooltip("TrashDunk 🏀 - En veille silencieuse")
+                .on_menu_event(|app, event| {
+                    if event.id.as_ref() == "quit" {
                         app.exit(0);
                     }
-                    "show" => {
-                        if let Some(w) = app.get_webview_window("main") {
-                            let _ = w.show();
-                            let _ = w.set_focus();
-                        }
-                    }
-                    "onboard" => {
-                        let _ = start_onboarding(app.clone());
-                    }
-                    _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
                     if let TrayIconEvent::Click {
@@ -140,22 +207,29 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // Si lancé avec `--minimized` (démarrage automatique Windows), ne pas afficher la fenêtre
-            let args: Vec<String> = env::args().collect();
-            let is_minimized = args.iter().any(|a| a == "--minimized");
+            let cfg = load_config();
 
-            if let Some(window) = app.get_webview_window("main") {
-                if is_minimized && args.len() == 2 {
-                    let _ = window.hide();
+            if let Some(w) = app.get_webview_window("main") {
+                if is_background && !has_files {
+                    // Démarrage avec Windows : rester invisible
+                    let _ = w.hide();
+                } else if has_files {
+                    // Clic droit "Dunk it" : plein écran transparent direct
+                    let _ = w.set_fullscreen(true);
+                    let _ = w.show();
+                } else if !cfg.is_installed {
+                    // Première ouverture de l'exe : afficher la modale d'installation
+                    let _ = w.show();
                 }
             }
 
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            start_onboarding,
+            get_app_status,
+            install_service,
+            complete_onboarding,
             send_to_recycle_bin,
-            register_context_menu,
             get_target_files,
             close_overlay
         ])

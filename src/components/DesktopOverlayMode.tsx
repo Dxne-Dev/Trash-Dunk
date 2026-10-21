@@ -1,22 +1,30 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { Arena } from "./arena/Arena";
+import { InstallerModal } from "./InstallerModal";
 import { DunkProvider } from "@/state/dunk";
 
 export function DesktopOverlayMode() {
+  const [status, setStatus] = useState<{ is_installed: boolean; is_onboarded: boolean } | null>(null);
   const [targetFiles, setTargetFiles] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [showInstaller, setShowInstaller] = useState(false);
+  const [onboardingSuccess, setOnboardingSuccess] = useState(false);
 
   useEffect(() => {
-    // Récupérer les fichiers ciblés (passés en argument de ligne de commande via clic droit)
-    invoke<string[]>("get_target_files")
-      .then((files) => {
-        setTargetFiles(files);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    // Vérifier le statut de l'application
+    invoke<{ is_installed: boolean; is_onboarded: boolean }>("get_app_status").then((st) => {
+      setStatus(st);
+      if (!st.is_installed) {
+        setShowInstaller(true);
+      }
+    });
 
-    // Fermeture immédiate avec la touche Échap
+    // Charger les fichiers ciblés (soit via clic droit, soit via onboarding)
+    invoke<string[]>("get_target_files").then((files) => {
+      setTargetFiles(files);
+    });
+
+    // Touche Échap = quitter l'overlay immédiatement
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         invoke("close_overlay");
@@ -27,46 +35,65 @@ export function DesktopOverlayMode() {
   }, []);
 
   const handleShootSuccess = (file: string) => {
-    // Suppression réelle vers la corbeille native via Rust
     invoke("send_to_recycle_bin", { path: file });
+
+    // Si on est en phase d'onboarding, on valide l'étape
+    if (status && !status.is_onboarded) {
+      setOnboardingSuccess(true);
+      invoke("complete_onboarding");
+      setTimeout(() => {
+        invoke("close_overlay");
+      }, 2500);
+    }
   };
 
-  if (loading) return null;
+  if (!status) return null;
 
+  // 1. Première ouverture : Boîte d'installation des conditions
+  if (showInstaller) {
+    return (
+      <InstallerModal
+        onInstalled={() => {
+          setShowInstaller(false);
+          // Recharger les fichiers injectés
+          invoke<string[]>("get_target_files").then((files) => {
+            setTargetFiles(files);
+          });
+        }}
+      />
+    );
+  }
+
+  // 2. Mode Overlay 100% Transparent (Sans aucun fond de fenêtre !)
   return (
     <DunkProvider>
-      <div className="relative h-screen w-screen bg-[#070b12]/92 text-chalk backdrop-blur-md overflow-hidden select-none flex flex-col justify-between p-6">
-        {/* En-tête : Informations du fichier ciblé */}
-        <div className="flex items-center justify-between border-b border-arena-800/80 pb-4">
-          <div className="flex items-center gap-3">
-            <span className="flex h-3 w-3 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-dunk-500 opacity-75" />
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-dunk-500" />
+      <div className="relative h-screen w-screen bg-transparent text-chalk overflow-hidden select-none pointer-events-none">
+        {/* Toast / Bannière d'échauffement flottante en haut */}
+        {!status.is_onboarded && !onboardingSuccess && (
+          <div className="pointer-events-auto absolute top-6 left-1/2 -translate-x-1/2 flex items-center gap-3 rounded-full border border-dunk-500/80 bg-arena-950/95 px-6 py-2.5 shadow-2xl backdrop-blur-md">
+            <span className="text-lg">🏀</span>
+            <span className="text-xs font-semibold text-chalk">
+              Échauffement : Dunker les fichiers temporaires pour finaliser l'installation !
             </span>
-            <span className="display text-xl text-chalk">
-              Trash<span className="text-dunk-500">Dunk</span>
-            </span>
-            <span className="text-xs text-chalk-dim border-l border-arena-700 pl-3">
-              {targetFiles.length > 0
-                ? `${targetFiles.length} fichier(s) prêt(s) au shoot`
-                : "Session d'entraînement (Onboarding)"}
+            <span className="text-[10px] text-chalk-dim bg-arena-850 px-2 py-0.5 rounded border border-arena-700">
+              [Échap pour quitter]
             </span>
           </div>
+        )}
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-chalk-dim/70">[Échap pour annuler sans supprimer]</span>
-            <button
-              onClick={() => invoke("close_overlay")}
-              className="rounded-md border border-arena-700 bg-arena-850 px-3 py-1 text-xs font-semibold text-chalk-dim hover:text-white hover:border-dunk-500 transition"
-            >
-              ✕ Fermer
-            </button>
+        {/* Message de succès onboarding */}
+        {onboardingSuccess && (
+          <div className="pointer-events-auto absolute top-10 left-1/2 -translate-x-1/2 flex flex-col items-center rounded-2xl border border-swish/60 bg-arena-950/95 px-8 py-5 shadow-2xl backdrop-blur-md animate-in zoom-in-95">
+            <div className="display text-3xl text-swish">SWISH ! ÉCHAUFFEMENT TERMINÉ 🏆</div>
+            <p className="mt-1 text-xs text-chalk-dim text-center">
+              TrashDunk est maintenant actif en veille en arrière-plan. Faites clic droit sur n'importe quel fichier à l'avenir !
+            </p>
           </div>
-        </div>
+        )}
 
-        {/* Terrain de basket en plein écran */}
-        <div className="relative flex-1 flex items-center justify-center py-4">
-          <div className="w-full max-w-[1100px]">
+        {/* Les composants de jeu flottants au-dessus du vrai bureau */}
+        <div className="pointer-events-auto absolute inset-0 flex items-center justify-center p-8">
+          <div className="w-full max-w-[1100px] drop-shadow-[0_25px_50px_rgba(0,0,0,0.85)]">
             <Arena onFileDunked={handleShootSuccess} />
           </div>
         </div>

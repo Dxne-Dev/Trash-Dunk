@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "TrashDunk",
   "version": "1.0.0",
-  "identifier": "com.trashdunk.app",
+  "identifier": "com.trashdunk.installer",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:5173",
@@ -13,13 +13,16 @@
     "windows": [
       {
         "title": "TrashDunk",
-        "width": 1280,
-        "height": 820,
-        "resizable": true,
+        "label": "main",
+        "width": 640,
+        "height": 520,
+        "resizable": false,
         "fullscreen": false,
         "center": true,
-        "decorations": true,
-        "transparent": false
+        "decorations": false,
+        "transparent": true,
+        "shadow": false,
+        "alwaysOnTop": true
       }
     ],
     "security": {

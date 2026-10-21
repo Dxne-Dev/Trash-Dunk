@@ -25,7 +25,7 @@ Un verbe « **Dunk it 🏀** » s'intègre directement dans le menu contextuel d
 Le verbe **« Dunk it »** est directement intégré au menu contextuel de Windows (`HKEY_CLASSES_ROOT\*\shell\TrashDunk`). En sélectionnant un fichier ou un groupe de fichiers, un simple clic droit ou le raccourci `Ctrl + Maj + D` active le mini-jeu :
 
 <div align="center">
-  <img src="./docs/images/explorer_workflow.png" alt="Maquette Explorateur Windows - Déclenchement Dunk it" width="950" style="border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);" />
+  <img src="./docs/images/explorer_workflow.jpg" alt="Maquette Explorateur Windows - Déclenchement Dunk it" width="950" style="border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);" />
 </div>
 
 ---

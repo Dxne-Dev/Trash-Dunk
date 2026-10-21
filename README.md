@@ -19,6 +19,17 @@ Un verbe « **Dunk it 🏀** » s'intègre directement dans le menu contextuel d
                                   🗑️ Corbeille Windows                                                   📁 Fichier intact sur le bureau
 ```
 
+### 🎬 Animation complète en boucle continue
+L'enchaînement fusionné de l'Explorateur Windows vers le Parquet de shoot :
+
+<div align="center">
+  <img src="./docs/images/workflow_demo.gif" alt="TrashDunk Workflow Continu - Explorateur vers Parquet" width="850" style="border-radius: 14px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.1);" />
+</div>
+
+<div align="center">
+  <p><i>Sélectionnez vos fichiers dans l'Explorateur ➔ Clic droit « Dunk it » ➔ Le parquet s'ouvre ➔ Visez la zone Swish !</i></p>
+</div>
+
 ---
 
 ### 1️⃣ Déclenchement depuis l'Explorateur Windows

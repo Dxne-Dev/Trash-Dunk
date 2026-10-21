@@ -90,8 +90,20 @@ const Ctx = createContext<DunkCtx | null>(null);
 
 let tid = 0;
 
-export function DunkProvider({ children }: { children: ReactNode }) {
-  const [queue, setQueue] = useState<DunkFile[]>(() => randomFiles(5));
+export function DunkProvider({
+  children,
+  initialFiles,
+}: {
+  children: ReactNode;
+  initialFiles?: DunkFile[];
+}) {
+  const [queue, setQueue] = useState<DunkFile[]>(() => initialFiles ?? randomFiles(5));
+
+  useEffect(() => {
+    if (initialFiles) {
+      setQueue(initialFiles);
+    }
+  }, [initialFiles]);
   const [trashed, setTrashed] = useState<DunkFile[]>([]);
   const [skipped, setSkipped] = useState(0);
   const [score, setScore] = useState(0);

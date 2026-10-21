@@ -40,7 +40,7 @@ html {
 
 body {
   margin: 0;
-  background-color: var(--color-arena-950);
+  background-color: transparent;
   color: var(--color-chalk);
   font-family: var(--font-body);
   overflow-x: hidden;

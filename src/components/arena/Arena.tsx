@@ -104,7 +104,13 @@ const easeOutBack = (t: number) => {
   return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
 };
 
-export function Arena({ onFileDunked }: { onFileDunked?: (file: string) => void }) {
+export function Arena({
+  onFileDunked,
+  transparent = false,
+}: {
+  onFileDunked?: (file: string) => void;
+  transparent?: boolean;
+}) {
   const d = useDunk();
   const {
     queue,
@@ -882,12 +888,22 @@ export function Arena({ onFileDunked }: { onFileDunked?: (file: string) => void 
   return (
     <section id="dunker" className="relative z-10 mx-auto w-full max-w-[1240px] px-4 pb-14 sm:px-6">
       <div
-        className={`relative overflow-hidden rounded-[20px] border bg-arena-900 shadow-[0_40px_120px_-30px_rgba(0,0,0,.9)] transition-shadow duration-500 ${
-          flash ? "border-dunk-500 shadow-[0_0_0_3px_rgba(234,90,36,.28),0_40px_120px_-30px_rgba(0,0,0,.9)]" : "border-arena-700/80"
+        className={`relative overflow-hidden rounded-[20px] transition-shadow duration-500 ${
+          transparent
+            ? "border-none bg-transparent shadow-none"
+            : `border bg-arena-900 shadow-[0_40px_120px_-30px_rgba(0,0,0,.9)] ${
+                flash ? "border-dunk-500 shadow-[0_0_0_3px_rgba(234,90,36,.28),0_40px_120px_-30px_rgba(0,0,0,.9)]" : "border-arena-700/80"
+              }`
         }`}
       >
         {/* ---------- SCOREBUG ---------- */}
-        <div className="relative flex flex-wrap items-stretch gap-px border-b border-arena-700/70 bg-arena-950/80 text-chalk">
+        <div
+          className={`relative flex flex-wrap items-stretch gap-px text-chalk ${
+            transparent
+              ? "rounded-xl border border-arena-700/80 bg-arena-950/90 shadow-xl"
+              : "border-b border-arena-700/70 bg-arena-950/80"
+          }`}
+        >
           <div className="flex items-center gap-2.5 bg-dunk-600 px-3 py-2 sm:px-4">
             <span className="display text-[19px] leading-none tracking-wide text-white sm:text-[23px]">
               Trash<span className="text-arena-950">Dunk</span>
@@ -928,7 +944,11 @@ export function Arena({ onFileDunked }: { onFileDunked?: (file: string) => void 
           role="application"
           aria-label="Terrain TrashDunk : cliquez-glissez vers le bas pour charger la jauge, relâchez pour tirer. Échap annule la session."
           className="relative h-[clamp(400px,58vh,600px)] w-full cursor-grab touch-none overflow-hidden select-none active:cursor-grabbing"
-          style={{ background: "linear-gradient(180deg,#0a0e15 0%,#111823 46%,#1a1410 74%,#241a12 100%)" }}
+          style={{
+            background: transparent
+              ? "transparent"
+              : "linear-gradient(180deg,#0a0e15 0%,#111823 46%,#1a1410 74%,#241a12 100%)",
+          }}
         >
           <div ref={shakeRef} className="absolute inset-0">
             {/* foule */}
@@ -994,7 +1014,9 @@ export function Arena({ onFileDunked }: { onFileDunked?: (file: string) => void 
                 }}
               />
             )}
-            <div className="absolute inset-0" style={{ boxShadow: "inset 0 0 140px 40px rgba(0,0,0,.72)" }} />
+            {!transparent && (
+              <div className="absolute inset-0" style={{ boxShadow: "inset 0 0 140px 40px rgba(0,0,0,.72)" }} />
+            )}
 
             {/* panier */}
             <Hoop width={geom.hoopW} left={geom.hoopLeft} top={geom.hoopTop} lit={lit} colorMode={colorMode} netKey={netKey} />

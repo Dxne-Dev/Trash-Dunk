@@ -18,8 +18,8 @@ export function InstallerModal({ onInstalled }: { onInstalled: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center p-6 bg-black/60 backdrop-blur-md">
-      <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-arena-600 bg-arena-950 p-6 shadow-2xl text-chalk">
+    <div className="fixed inset-0 flex items-center justify-center p-6 bg-transparent">
+      <div className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-arena-600 bg-[#0c121e] p-6 shadow-[0_25px_60px_rgba(0,0,0,0.95)] text-chalk">
         {/* En-tête */}
         <div className="flex items-center gap-3 border-b border-arena-800 pb-4">
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-dunk-500 text-xl font-bold">

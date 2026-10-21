@@ -4,14 +4,20 @@ import { Arena } from "./arena/Arena";
 import { InstallerModal } from "./InstallerModal";
 import { DunkProvider } from "@/state/dunk";
 
+interface TargetFile {
+  path: string;
+  name: string;
+  ext: string;
+  size_kb: number;
+}
+
 export function DesktopOverlayMode() {
   const [status, setStatus] = useState<{ is_installed: boolean; is_onboarded: boolean } | null>(null);
-  const [targetFiles, setTargetFiles] = useState<string[]>([]);
+  const [targetFiles, setTargetFiles] = useState<TargetFile[]>([]);
   const [showInstaller, setShowInstaller] = useState(false);
   const [onboardingSuccess, setOnboardingSuccess] = useState(false);
 
   useEffect(() => {
-    // Vérifier le statut de l'application
     invoke<{ is_installed: boolean; is_onboarded: boolean }>("get_app_status").then((st) => {
       setStatus(st);
       if (!st.is_installed) {
@@ -19,12 +25,11 @@ export function DesktopOverlayMode() {
       }
     });
 
-    // Charger les fichiers ciblés (soit via clic droit, soit via onboarding)
-    invoke<string[]>("get_target_files").then((files) => {
+    // Charger les métadonnées réelles des fichiers ciblés par le clic droit
+    invoke<TargetFile[]>("get_target_files_info").then((files) => {
       setTargetFiles(files);
     });
 
-    // Touche Échap = quitter l'overlay immédiatement
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         invoke("close_overlay");
@@ -34,10 +39,13 @@ export function DesktopOverlayMode() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const handleShootSuccess = (file: string) => {
-    invoke("send_to_recycle_bin", { path: file });
+  const handleShootSuccess = (fileName: string) => {
+    // Retrouver le chemin absolu du fichier ciblé
+    const found = targetFiles.find((f) => f.name === fileName || `${f.name}.${f.ext}` === fileName);
+    const targetPath = found ? found.path : fileName;
 
-    // Si on est en phase d'onboarding, on valide l'étape
+    invoke("send_to_recycle_bin", { path: targetPath });
+
     if (status && !status.is_onboarded) {
       setOnboardingSuccess(true);
       invoke("complete_onboarding");
@@ -49,14 +57,12 @@ export function DesktopOverlayMode() {
 
   if (!status) return null;
 
-  // 1. Première ouverture : Boîte d'installation des conditions
   if (showInstaller) {
     return (
       <InstallerModal
         onInstalled={() => {
           setShowInstaller(false);
-          // Recharger les fichiers injectés
-          invoke<string[]>("get_target_files").then((files) => {
+          invoke<TargetFile[]>("get_target_files_info").then((files) => {
             setTargetFiles(files);
           });
         }}
@@ -64,9 +70,16 @@ export function DesktopOverlayMode() {
     );
   }
 
-  // 2. Mode Overlay 100% Transparent (Sans aucun fond de fenêtre !)
+  // Conversion en format DunkFile pour l'arène
+  const dunkFiles = targetFiles.map((f, idx) => ({
+    id: `target_${idx}`,
+    name: f.name,
+    ext: f.ext,
+    sizeKb: f.size_kb,
+  }));
+
   return (
-    <DunkProvider>
+    <DunkProvider initialFiles={dunkFiles.length > 0 ? dunkFiles : undefined}>
       <div className="relative h-screen w-screen bg-transparent text-chalk overflow-hidden select-none pointer-events-none">
         {/* Toast / Bannière d'échauffement flottante en haut */}
         {!status.is_onboarded && !onboardingSuccess && (
@@ -93,8 +106,8 @@ export function DesktopOverlayMode() {
 
         {/* Les composants de jeu flottants au-dessus du vrai bureau */}
         <div className="pointer-events-auto absolute inset-0 flex items-center justify-center p-8">
-          <div className="w-full max-w-[1100px] drop-shadow-[0_25px_50px_rgba(0,0,0,0.85)]">
-            <Arena onFileDunked={handleShootSuccess} />
+          <div className="w-full max-w-[1100px]">
+            <Arena onFileDunked={handleShootSuccess} transparent={true} />
           </div>
         </div>
       </div>

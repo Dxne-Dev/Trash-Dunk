@@ -130,7 +130,6 @@ fn send_to_recycle_bin(path: String) -> Result<bool, String> {
     trash::delete(&path).map(|_| true).map_err(|e| e.to_string())
 }
 
-#[tauri::command]
 fn get_target_files() -> Vec<String> {
     let args: Vec<String> = env::args().collect();
     let mut files = Vec::new();
@@ -139,7 +138,6 @@ fn get_target_files() -> Vec<String> {
             files.push(arg);
         }
     }
-    // Si aucun fichier passé et pas encore d'onboarding, on utilise les fichiers temporaires
     if files.is_empty() {
         let cfg = load_config();
         if !cfg.is_onboarded {
@@ -156,6 +154,43 @@ fn get_target_files() -> Vec<String> {
         }
     }
     files
+}
+
+#[derive(Serialize, Deserialize)]
+struct TargetFileInfo {
+    path: String,
+    name: String,
+    ext: String,
+    size_kb: u64,
+}
+
+#[tauri::command]
+fn get_target_files_info() -> Vec<TargetFileInfo> {
+    let raw_files = get_target_files();
+    let mut infos = Vec::new();
+
+    for p in raw_files {
+        let path = std::path::Path::new(&p);
+        let name = path
+            .file_stem()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+        let ext = path
+            .extension()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+        let size_kb = fs::metadata(&p).map(|m| m.len() / 1024).unwrap_or(1);
+
+        infos.push(TargetFileInfo {
+            path: p,
+            name,
+            ext,
+            size_kb,
+        });
+    }
+    infos
 }
 
 #[tauri::command]
@@ -230,7 +265,7 @@ pub fn run() {
             install_service,
             complete_onboarding,
             send_to_recycle_bin,
-            get_target_files,
+            get_target_files_info,
             close_overlay
         ])
         .run(tauri::generate_context!())

@@ -104,7 +104,7 @@ const easeOutBack = (t: number) => {
   return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
 };
 
-export function Arena() {
+export function Arena({ onFileDunked }: { onFileDunked?: (file: string) => void }) {
   const d = useDunk();
   const {
     queue,
@@ -549,6 +549,10 @@ export function Arena() {
     } else {
       G.shake = o.kind === "airball" ? 13 : 8;
       pfRef.current?.sparks(G.ball.x, G.ball.y, 12, "#ff4f5a", 150);
+    }
+
+    if (o.made && onFileDunked && file) {
+      onFileDunked(file.name);
     }
 
     showBanner({ kind: o.kind, delta: o.delta, pts: o.points, weak: o.weak }, triggeredCold ? 620 : 1750);

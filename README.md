@@ -10,78 +10,39 @@ Un verbe « **Dunk it 🏀** » s'intègre directement dans le menu contextuel d
 ## 🎯 Déroulement du geste (Workflow)
 
 ```
-[Fichier dans l'Explorateur]
-          │
-          ▼  (1. Clic droit -> Verbe Shell)
-   [Menu « Dunk it 🏀 »]
-          │
-          ▼  (2. Apparition immédiate sur le Parquet)
-   [File d'attente & Ballon prêt au tir]
-          │
-          ▼  (3. Traction / Timing de la Jauge)
-   [Jauge d'adresse oscillante]
-       ┌──┴──┐
-       ▼     ▼
- [Zone Verte ≤ 2%] [À côté > 15%]
-       │               │
-  (SWISH ! 🗑️)     (AIR BALL ❌)
-       │               │
-  Déplacé vers      Fichier
-   Corbeille        Intact
+[1. Clic droit dans l'Explorateur] ──► [2. Verbe « Dunk it 🏀 »] ──► [3. Arrivée sur le Parquet & Shoot]
+                                                                                │
+                                           ┌────────────────────────────────────┴───────────────────────────────────┐
+                                           ▼                                                                        ▼
+                                   [Zone Verte : Swish !]                                                   [À côté : Air Ball / Brick]
+                                           │                                                                        │
+                                  🗑️ Corbeille Windows                                                   📁 Fichier intact sur le bureau
 ```
-
-### Étape 1 : Le déclenchement depuis l'Explorateur Windows
-On sélectionne un fichier, clic droit ➔ **Dunk it 🏀** :
-
-| Fenêtre Explorateur Windows | Verbe Shell Enregistré |
-| :--- | :--- |
-| ![Explorer](https://img.shields.io/badge/Windows_Explorer-Bureau-202a37?style=for-the-badge&logo=windows) | `HKEY_CLASSES_ROOT\*\shell\TrashDunk` |
-| 📄 `rapport_final_v12_DEFINITIF.docx` | **🏀 Dunk it** (`Ctrl + Maj + D`) |
-| 📊 `Copie de budget_2024.xlsx` | ✂️ Couper / 📋 Copier |
-| 🖼️ `photo_VACANCES_plage.jpg` | 🗑️ Supprimer (inchangé) |
 
 ---
 
-### Étape 2 : L'arrivée sur le Parquet & Le Shoot
+### 1️⃣ Déclenchement depuis l'Explorateur Windows
+Le verbe **« Dunk it »** est directement intégré au menu contextuel de Windows (`HKEY_CLASSES_ROOT\*\shell\TrashDunk`). En sélectionnant un fichier ou un groupe de fichiers, un simple clic droit ou le raccourci `Ctrl + Maj + D` active le mini-jeu :
 
 <div align="center">
-
-```
-========================================================================================
-🏀 TRASHDUNK ARENA   |  Score: 249  |  Streak: 3 ×2  |  Cible: 43%  |  Corbeille: [ 03 ]
-========================================================================================
-
-                 [ PANIER / CORBEILLE NATIVE ]
-                        +---------+
-                        |  [43%]  |  <-- Cible Swish
-                        +----+----+
-                             |
-                           \===/  <-- Filet Sunset Glow
-                            \ /
-                             v
-
-             ( T I R   E N   C O U R S )
-                 .  '  °  ^  °  '  .
-              °                       °
-            .                           .
-           🏀 [PSD_logo_vectorisé.psd]     🗑️ Corbeille (3 dunks)
-           (125.4 Mo)
- ______________________________________________________________________________________
-  TIMING : [   AIR BALL   |==== PANIER ====|   SWISH (43%)   |==== REBOND ====|   0   ]
-           [ 0%           |                |      [|||]      |                | 100%  ]
- --------------------------------------------------------------------------------------
-                  ▲ Glissez vers le bas pour charger · Relâchez pour tirer ▲
-========================================================================================
-```
-
+  <img src="./docs/images/explorer_workflow.png" alt="Maquette Explorateur Windows - Déclenchement Dunk it" width="950" style="border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);" />
 </div>
 
-### Règles & Célébrations :
-* **Swish (écart ≤ 2 %) :** Filet transpercé, le fichier va directement dans la corbeille native Windows.
-* **2 swishs d'affilée = Mode COLD :** L'écran gèle instantanément, craquelures de glace et explosion finale avec le sticker collector **COLD** ❄️.
-* **3 paniers réussis = Sunset Glow :** Parquet et anneau illuminés d'un dégradé fluorescent rouge / rose / orange avec multiplicateur de score.
+---
+
+### 2️⃣ Arrivée sur le Parquet & Mini-Jeu de Shoot
+Le fichier devient le ballon de basket. Cliquez et glissez vers le bas pour charger la jauge d'adresse, puis relâchez pour déclencher le tir vers le panier :
+
+<div align="center">
+  <img src="./docs/images/arena_workflow.png" alt="Le Terrain TrashDunk - Parquet, Panier et Shoot" width="950" style="border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.6);" />
+</div>
+
+#### Règles & Célébrations :
+* **Swish (écart ≤ 2 %) :** Tir parfait au centre du filet. Le fichier est déplacé vers la corbeille Windows native.
+* **2 swishs d'affilée = Mode COLD :** Gel intégral de l'écran avec craquelures et explosion finale accompagnée du sticker collector **COLD** ❄️.
+* **3 paniers réussis = Sunset Glow :** Effet néon rouge / rose / orange sur le panier et multiplicateur de streak.
 * **Air ball (écart > 15 %) :** Le ballon rate le panier. **Le fichier n'est pas touché et reste sur le bureau.**
-* **Sécurité Échap :** Annule immédiatement la session sans aucune suppression.
+* **Touche Échap :** Annule immédiatement la session à tout instant sans toucher à vos fichiers.
 
 ---
 
@@ -95,7 +56,7 @@ Testez immédiatement le jeu, la physique du ballon, les combos et les bruitages
 - Intégration dans le menu contextuel clic droit de Windows (`HKEY_CURRENT_USER\Software\Classes\*\shell\TrashDunk`).
 - Rendu visuel 100% fidèle avec les effets de shaders, particules, confettis et sticker COLD.
 - Suppression réelle vers la corbeille native via l'API Win32 Recycle Bin (`trash::delete`).
-- Binaire autonome disponible directement dans le dossier [`dist-desktop/TrashDunk.exe`](./dist-desktop/TrashDunk.exe).
+- Binaire autonome prêt à l'emploi disponible dans [`dist-desktop/TrashDunk.exe`](./dist-desktop/TrashDunk.exe).
 
 ---
 
@@ -103,7 +64,7 @@ Testez immédiatement le jeu, la physique du ballon, les combos et les bruitages
 
 ### Prérequis
 - [Node.js](https://nodejs.org/) (v18+)
-- [Rust & Cargo](https://rustup.rs/) (pour compiler la version native desktop)
+- [Rust & Cargo](https://rustup.rs/) (pour compiler la version desktop)
 
 ### Cloner le projet
 ```bash

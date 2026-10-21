@@ -175,14 +175,6 @@ export function Nav() {
             </button>
           )}
           <button
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent("trashdunk:open-autodemo"));
-            }}
-            className="hidden items-center gap-1.5 rounded-md border border-dunk-500/60 bg-dunk-500/15 px-3 py-1.5 text-[11px] font-semibold text-dunk-300 transition hover:bg-dunk-500/30 hover:text-white sm:flex"
-          >
-            <span>▶</span> Voir la Démo
-          </button>
-          <button
             onClick={toggleSound}
             aria-label={soundOn ? "Couper le son" : "Activer le son"}
             className="grid h-9 w-9 place-items-center rounded-md border border-arena-600 bg-arena-850 text-chalk-dim transition hover:border-dunk-500 hover:text-chalk"

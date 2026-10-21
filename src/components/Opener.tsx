@@ -43,12 +43,6 @@ export function Opener() {
             </p>
 
             <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] text-chalk-dim/80">
-              <button
-                onClick={() => window.dispatchEvent(new CustomEvent("trashdunk:open-autodemo"))}
-                className="group flex items-center gap-2 rounded-md border border-dunk-500 bg-dunk-500 px-4 py-2 font-semibold text-white transition hover:bg-dunk-600 hover:shadow-[0_0_20px_rgba(255,94,32,0.4)]"
-              >
-                <span>▶</span> Voir l'animation complète
-              </button>
               <a
                 href="#dunker"
                 className="group flex items-center gap-2 rounded-md border border-dunk-500/60 bg-dunk-500/10 px-3.5 py-2 font-semibold text-dunk-300 transition hover:bg-dunk-500/20 hover:text-chalk"

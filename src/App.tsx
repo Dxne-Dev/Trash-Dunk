@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { Download } from "@/components/Download";
 import { Footer, Nav, Ribbon, Toaster } from "@/components/Chrome";
 import { MeterAnatomy } from "@/components/MeterAnatomy";
@@ -7,7 +6,6 @@ import { Playbook } from "@/components/Playbook";
 import { Roadmap } from "@/components/Roadmap";
 import { SpecSheet } from "@/components/SpecSheet";
 import { Trigger } from "@/components/Trigger";
-import { AutoDemoModal } from "@/components/AutoDemoModal";
 import { DunkProvider } from "@/state/dunk";
 
 const RIBBON_TOP = [
@@ -33,14 +31,6 @@ const RIBBON_TECH = [
 ];
 
 export default function App() {
-  const [showDemoModal, setShowDemoModal] = useState(false);
-
-  useEffect(() => {
-    const handleOpen = () => setShowDemoModal(true);
-    window.addEventListener("trashdunk:open-autodemo", handleOpen);
-    return () => window.removeEventListener("trashdunk:open-autodemo", handleOpen);
-  }, []);
-
   return (
     <DunkProvider>
       <div id="top" className="relative min-h-screen">
@@ -64,7 +54,6 @@ export default function App() {
 
         <Footer />
         <Toaster />
-        <AutoDemoModal isOpen={showDemoModal} onClose={() => setShowDemoModal(false)} />
       </div>
     </DunkProvider>
   );

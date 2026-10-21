@@ -10,31 +10,78 @@ Un verbe « **Dunk it 🏀** » s'intègre directement dans le menu contextuel d
 ## 🎯 Déroulement du geste (Workflow)
 
 ```
-[Fichier sur le bureau]
+[Fichier dans l'Explorateur]
           │
-          ▼  (Clic droit)
+          ▼  (1. Clic droit -> Verbe Shell)
    [Menu « Dunk it 🏀 »]
           │
-          ▼
-   [Apparition du Parquet & Ballon]
+          ▼  (2. Apparition immédiate sur le Parquet)
+   [File d'attente & Ballon prêt au tir]
           │
-          ▼  (Traction / Timing)
+          ▼  (3. Traction / Timing de la Jauge)
    [Jauge d'adresse oscillante]
        ┌──┴──┐
        ▼     ▼
- [Zone Verte] [À côté]
-       │         │
-    (Swish!)  (Brick / Air ball)
-       │         │
-   Fichier     Fichier
-  Corbeille    Intact
+ [Zone Verte ≤ 2%] [À côté > 15%]
+       │               │
+  (SWISH ! 🗑️)     (AIR BALL ❌)
+       │               │
+  Déplacé vers      Fichier
+   Corbeille        Intact
 ```
 
-### Règles du terrain :
-- **Swish (écart ≤ 2%) :** Le tir parfait ! Le fichier file directement dans la corbeille Windows.
-- **2 Swishs d'affilée = Mode COLD :** Effet gel intégral de l'écran, craquelures de glace et explosion avec le sticker collector **COLD** ❄️.
-- **Air ball / Brick :** Le ballon rebondit sur l'anneau ou passe à côté. **Aucun fichier n'est touché**.
-- **Touche Échap :** Annulation immédiate en un éclair à tout moment.
+### Étape 1 : Le déclenchement depuis l'Explorateur Windows
+On sélectionne un fichier, clic droit ➔ **Dunk it 🏀** :
+
+| Fenêtre Explorateur Windows | Verbe Shell Enregistré |
+| :--- | :--- |
+| ![Explorer](https://img.shields.io/badge/Windows_Explorer-Bureau-202a37?style=for-the-badge&logo=windows) | `HKEY_CLASSES_ROOT\*\shell\TrashDunk` |
+| 📄 `rapport_final_v12_DEFINITIF.docx` | **🏀 Dunk it** (`Ctrl + Maj + D`) |
+| 📊 `Copie de budget_2024.xlsx` | ✂️ Couper / 📋 Copier |
+| 🖼️ `photo_VACANCES_plage.jpg` | 🗑️ Supprimer (inchangé) |
+
+---
+
+### Étape 2 : L'arrivée sur le Parquet & Le Shoot
+
+<div align="center">
+
+```
+========================================================================================
+🏀 TRASHDUNK ARENA   |  Score: 249  |  Streak: 3 ×2  |  Cible: 43%  |  Corbeille: [ 03 ]
+========================================================================================
+
+                 [ PANIER / CORBEILLE NATIVE ]
+                        +---------+
+                        |  [43%]  |  <-- Cible Swish
+                        +----+----+
+                             |
+                           \===/  <-- Filet Sunset Glow
+                            \ /
+                             v
+
+             ( T I R   E N   C O U R S )
+                 .  '  °  ^  °  '  .
+              °                       °
+            .                           .
+           🏀 [PSD_logo_vectorisé.psd]     🗑️ Corbeille (3 dunks)
+           (125.4 Mo)
+ ______________________________________________________________________________________
+  TIMING : [   AIR BALL   |==== PANIER ====|   SWISH (43%)   |==== REBOND ====|   0   ]
+           [ 0%           |                |      [|||]      |                | 100%  ]
+ --------------------------------------------------------------------------------------
+                  ▲ Glissez vers le bas pour charger · Relâchez pour tirer ▲
+========================================================================================
+```
+
+</div>
+
+### Règles & Célébrations :
+* **Swish (écart ≤ 2 %) :** Filet transpercé, le fichier va directement dans la corbeille native Windows.
+* **2 swishs d'affilée = Mode COLD :** L'écran gèle instantanément, craquelures de glace et explosion finale avec le sticker collector **COLD** ❄️.
+* **3 paniers réussis = Sunset Glow :** Parquet et anneau illuminés d'un dégradé fluorescent rouge / rose / orange avec multiplicateur de score.
+* **Air ball (écart > 15 %) :** Le ballon rate le panier. **Le fichier n'est pas touché et reste sur le bureau.**
+* **Sécurité Échap :** Annule immédiatement la session sans aucune suppression.
 
 ---
 
@@ -44,12 +91,11 @@ Un verbe « **Dunk it 🏀** » s'intègre directement dans le menu contextuel d
 Testez immédiatement le jeu, la physique du ballon, les combos et les bruitages directement dans votre navigateur web sans rien installer :
 👉 **[Accéder à la démo en ligne TrashDunk](https://dxne-dev.github.io/Trash-Dunk/)**
 
-*(Vous pouvez aussi cliquer sur le bouton **« ▶ Voir la Démo »** pour visionner l'animation complète du workflow).*
-
 ### 2. Version Native Windows (Tauri & .NET)
 - Intégration dans le menu contextuel clic droit de Windows (`HKEY_CURRENT_USER\Software\Classes\*\shell\TrashDunk`).
 - Rendu visuel 100% fidèle avec les effets de shaders, particules, confettis et sticker COLD.
-- Suppression réelle vers la corbeille native via l'API Win32 Recycle Bin.
+- Suppression réelle vers la corbeille native via l'API Win32 Recycle Bin (`trash::delete`).
+- Binaire autonome disponible directement dans le dossier [`dist-desktop/TrashDunk.exe`](./dist-desktop/TrashDunk.exe).
 
 ---
 
@@ -76,7 +122,6 @@ Rendez-vous sur `http://localhost:5173`.
 ```bash
 npm run build
 ```
-Le site statique optimisé est généré dans le dossier `dist/`.
 
 ### 3. Lancer l'application Native Desktop (Tauri)
 ```bash
@@ -87,7 +132,7 @@ npx tauri dev
 ```bash
 npx tauri build
 ```
-L'exécutable final se trouvera dans `src-tauri/target/release/TrashDunk.exe`.
+L'exécutable final se trouvera dans `src-tauri/target/release/TrashDunk.exe` (ou dans `dist-desktop/`).
 
 ---
 

@@ -310,7 +310,7 @@ pub fn run() {
 
             let toggle_free_ref = toggle_free_i.clone();
 
-            let _tray = TrayIconBuilder::new()
+            let tray = TrayIconBuilder::with_id("main-tray")
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .tooltip("TrashDunk 🏀 - En veille silencieuse")
@@ -350,6 +350,9 @@ pub fn run() {
                 })
                 .build(app)?;
 
+            // Garder la référence du tray vivante au niveau de l'état global géré par Tauri
+            app.manage(tray);
+
             let cfg = load_config();
 
             if let Some(w) = app.get_webview_window("main") {
@@ -376,6 +379,12 @@ pub fn run() {
             set_free_mode,
             close_overlay
         ])
-        .run(tauri::generate_context!())
-        .expect("error while building tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, event| {
+            if let tauri::RunEvent::ExitRequested { api, .. } = event {
+                // Empêcher l'application et le tray icon de se fermer quand la fenêtre est masquée
+                api.prevent_exit();
+            }
+        });
 }

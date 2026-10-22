@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { sfx } from "@/lib/audio";
 import { extMeta } from "@/lib/files";
 import type { DunkFile } from "@/lib/files";
@@ -1228,10 +1229,8 @@ export function Arena({
                           sfx.play("ui");
                           d.dismissSummary();
                           if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
-                            import("@tauri-apps/api/core").then(({ invoke }) => {
-                              invoke("open_recycle_bin");
-                              invoke("close_overlay");
-                            });
+                            invoke("open_recycle_bin");
+                            invoke("close_overlay");
                           }
                         }}
                         className="flex-1 rounded-lg bg-swish/20 border border-swish/50 px-4 py-3 text-xs font-bold text-swish transition hover:bg-swish/30 active:scale-95"
@@ -1244,9 +1243,7 @@ export function Arena({
                         sfx.play("ui");
                         d.dismissSummary();
                         if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
-                          import("@tauri-apps/api/core").then(({ invoke }) => {
-                            invoke("close_overlay");
-                          });
+                          invoke("close_overlay");
                         }
                       }}
                       className="flex-1 rounded-lg bg-dunk-500 px-5 py-3 text-xs font-bold text-white transition hover:bg-dunk-400 active:scale-95"

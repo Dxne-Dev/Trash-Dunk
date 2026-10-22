@@ -109,7 +109,13 @@ export function DunkProvider({
   );
 
   const [queue, setQueue] = useState<DunkFile[]>(() =>
-    isFreeMode ? [FREE_BALL_TEMPLATE] : initialFiles ?? randomFiles(5)
+    isFreeMode
+      ? [FREE_BALL_TEMPLATE]
+      : initialFiles !== undefined
+        ? initialFiles
+        : typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
+          ? []
+          : randomFiles(5)
   );
 
   const startTimeRef = useRef<number>(Date.now());

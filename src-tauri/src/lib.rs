@@ -214,6 +214,9 @@ fn set_free_mode(app: AppHandle, enabled: bool) {
 
 #[tauri::command]
 fn close_overlay(app: AppHandle) {
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.hide();
+    }
     {
         let mut lock = COLLECTED_FILES.lock().unwrap();
         lock.clear();
@@ -226,17 +229,19 @@ fn close_overlay(app: AppHandle) {
             let _ = app.emit("trashdunk:free_mode_changed", false);
         }
     }
-    if let Some(w) = app.get_webview_window("main") {
-        let _ = w.hide();
-    }
 }
 
 fn add_files_from_args(args: &[String]) {
     let mut lock = COLLECTED_FILES.lock().unwrap();
-    for arg in args.iter().skip(1) {
-        if !arg.starts_with("--") && std::path::Path::new(arg).exists() {
-            if !lock.contains(arg) {
-                lock.push(arg.clone());
+    for raw_arg in args.iter().skip(1) {
+        let cleaned = raw_arg.trim().trim_matches('"').trim_matches('\'');
+        if !cleaned.starts_with("--") {
+            let path = std::path::Path::new(cleaned);
+            if path.exists() {
+                let s = path.to_string_lossy().to_string();
+                if !lock.contains(&s) {
+                    lock.push(s);
+                }
             }
         }
     }
@@ -263,21 +268,18 @@ fn add_files_from_args(args: &[String]) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
-            // Si la fenêtre principale était masquée (session précédente terminée), on vide les anciens fichiers
-            let was_hidden = app
-                .get_webview_window("main")
-                .map(|w| !w.is_visible().unwrap_or(true))
-                .unwrap_or(false);
-
-            if was_hidden {
+            // Toujours réinitialiser la liste pour la nouvelle sélection provenant du clic droit
+            {
                 let mut lock = COLLECTED_FILES.lock().unwrap();
                 lock.clear();
             }
 
-            // Quand un ou plusieurs fichiers arrivent via clic droit : on ajoute à la session
+            // Récupérer les nouveaux fichiers ciblés
             add_files_from_args(&args);
             let _ = app.emit("trashdunk:files_updated", ());
+
             if let Some(w) = app.get_webview_window("main") {
+                let _ = w.unminimize();
                 let _ = w.set_fullscreen(true);
                 let _ = w.show();
                 let _ = w.set_focus();

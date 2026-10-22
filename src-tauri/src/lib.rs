@@ -214,20 +214,20 @@ fn set_free_mode(app: AppHandle, enabled: bool) {
 
 #[tauri::command]
 fn close_overlay(app: AppHandle) {
+    // Masquer immédiatement la fenêtre en premier
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.hide();
     }
+    // Vider les fichiers collectés
     {
         let mut lock = COLLECTED_FILES.lock().unwrap();
         lock.clear();
     }
-    // Si on était en mode sans fichier, on repasse automatiquement sur OFF
+    // Réinitialiser silencieusement FREE_MODE sans émettre d'événement
+    // (évite le re-render React qui interférait avec le clic de fermeture)
     {
         let mut f_lock = FREE_MODE.lock().unwrap();
-        if *f_lock {
-            *f_lock = false;
-            let _ = app.emit("trashdunk:free_mode_changed", false);
-        }
+        *f_lock = false;
     }
 }
 
@@ -268,13 +268,19 @@ fn add_files_from_args(args: &[String]) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
-            // Toujours réinitialiser la liste pour la nouvelle sélection provenant du clic droit
-            {
+            // Vider uniquement si la fenêtre est déjà masquée (nouvelle session)
+            // Si elle est visible, on accumule (multi-sélection Windows = plusieurs appels successifs)
+            let window_hidden = app
+                .get_webview_window("main")
+                .map(|w| !w.is_visible().unwrap_or(true))
+                .unwrap_or(true);
+
+            if window_hidden {
                 let mut lock = COLLECTED_FILES.lock().unwrap();
                 lock.clear();
             }
 
-            // Récupérer les nouveaux fichiers ciblés
+            // Ajouter les fichiers de cet appel
             add_files_from_args(&args);
             let _ = app.emit("trashdunk:files_updated", ());
 

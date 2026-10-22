@@ -40,12 +40,15 @@ export function DesktopOverlayMode() {
     let unlistenFiles: (() => void) | undefined;
     let unlistenFreeMode: (() => void) | undefined;
     import("@tauri-apps/api/event").then(({ listen }) => {
+      // Quand de nouveaux fichiers arrivent, rafraîchir ET remettre le mode libre à false
       listen("trashdunk:files_updated", () => {
+        setIsFreeMode(false);
         refreshFiles();
       }).then((u) => {
         unlistenFiles = u;
       });
 
+      // Événement du tray uniquement (activation du mode illimité depuis le menu)
       listen<boolean>("trashdunk:free_mode_changed", (event) => {
         setIsFreeMode(event.payload);
         if (event.payload) {

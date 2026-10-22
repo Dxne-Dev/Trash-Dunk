@@ -56,18 +56,29 @@ fn install_service(app: AppHandle) -> Result<bool, String> {
     let exe_str = current_exe.to_string_lossy().to_string();
 
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+
+    // Enregistrement pour les fichiers ordinaires (*)
     let (key, _) = hkcu
         .create_subkey(r"Software\Classes\*\shell\TrashDunk")
         .map_err(|e| e.to_string())?;
-
     key.set_value("", &"Dunk it 🏀").map_err(|e| e.to_string())?;
     key.set_value("Icon", &exe_str).map_err(|e| e.to_string())?;
-
     let (cmd_key, _) = key
         .create_subkey("command")
         .map_err(|e| e.to_string())?;
     let cmd_value = format!("\"{}\" \"%1\"", exe_str);
     cmd_key.set_value("", &cmd_value).map_err(|e| e.to_string())?;
+
+    // Enregistrement pour les dossiers (Directory)
+    let (dir_key, _) = hkcu
+        .create_subkey(r"Software\Classes\Directory\shell\TrashDunk")
+        .map_err(|e| e.to_string())?;
+    dir_key.set_value("", &"Dunk it 🏀").map_err(|e| e.to_string())?;
+    dir_key.set_value("Icon", &exe_str).map_err(|e| e.to_string())?;
+    let (dir_cmd_key, _) = dir_key
+        .create_subkey("command")
+        .map_err(|e| e.to_string())?;
+    dir_cmd_key.set_value("", &cmd_value).map_err(|e| e.to_string())?;
 
     let (run_key, _) = hkcu
         .create_subkey(r"Software\Microsoft\Windows\CurrentVersion\Run")
@@ -154,16 +165,26 @@ fn get_target_files_info() -> Vec<TargetFileInfo> {
     let mut infos = Vec::new();
     for p in raw_files {
         let path = std::path::Path::new(&p);
-        let name = path
-            .file_stem()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .to_string();
-        let ext = path
-            .extension()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .to_string();
+        let is_dir = path.is_dir();
+        let name = if is_dir {
+            path.file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string()
+        } else {
+            path.file_stem()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string()
+        };
+        let ext = if is_dir {
+            "dir".to_string()
+        } else {
+            path.extension()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string()
+        };
         let size_kb = fs::metadata(&p).map(|m| m.len() / 1024).unwrap_or(1);
 
         infos.push(TargetFileInfo {

@@ -847,18 +847,29 @@ export function Arena({
   /* ---------- clavier ---------- */
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && queueRef.current.length) {
-        sfx.play("error");
-        G.phase = "idle";
-        G.flight = null;
-        G.ret = null;
-        G.outcome = null;
-        G.ball = { ...geomRef.current.rest };
-        setPhase("idle");
-        setShownFile(null);
-        resetColorState();
-        d.cancelSession();
-        window.setTimeout(() => d.refill(5), 700);
+      if (e.key === "Escape") {
+        const isDesktop = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+        if (isDesktop) {
+          // En mode desktop, Échap ferme directement l'overlay sans exception
+          sfx.play("ui");
+          d.dismissSummary();
+          invoke("close_overlay");
+          return;
+        }
+
+        if (queueRef.current.length) {
+          sfx.play("error");
+          G.phase = "idle";
+          G.flight = null;
+          G.ret = null;
+          G.outcome = null;
+          G.ball = { ...geomRef.current.rest };
+          setPhase("idle");
+          setShownFile(null);
+          resetColorState();
+          d.cancelSession();
+          window.setTimeout(() => d.refill(5), 700);
+        }
       }
     };
     window.addEventListener("keydown", k);
@@ -1187,7 +1198,7 @@ export function Arena({
 
             {/* fin de session */}
             {summary && (
-              <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/75 p-6 backdrop-blur-md">
+              <div className="pointer-events-auto absolute inset-0 z-30 flex items-center justify-center bg-black/75 p-6 backdrop-blur-md">
                 <div className="anim-pop w-full max-w-md rounded-2xl border border-arena-600 bg-arena-950 p-6 shadow-2xl text-center">
                   <div className="display text-[13px] tracking-[0.28em] text-dunk-400 uppercase">
                     {summary.isFreeMode ? "Entraînement terminé" : "Session terminée"}
@@ -1225,6 +1236,7 @@ export function Arena({
                   <div className="mt-6 flex flex-wrap gap-2.5">
                     {!summary.isFreeMode && (
                       <button
+                        type="button"
                         onClick={() => {
                           sfx.play("ui");
                           d.dismissSummary();
@@ -1233,22 +1245,20 @@ export function Arena({
                             invoke("close_overlay");
                           }
                         }}
-                        className="flex-1 rounded-lg bg-swish/20 border border-swish/50 px-4 py-3 text-xs font-bold text-swish transition hover:bg-swish/30 active:scale-95"
+                        className="flex-1 cursor-pointer rounded-lg bg-swish/20 border border-swish/50 px-4 py-3 text-xs font-bold text-swish transition hover:bg-swish/30 active:scale-95"
                       >
                         🗑️ Ouvrir la corbeille
                       </button>
                     )}
                     <button
+                      type="button"
                       onClick={() => {
-                        sfx.play("ui");
-                        d.dismissSummary();
-                        if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
-                          invoke("close_overlay");
-                        }
+                        // Déclenche exactement le même flux que la touche ESC
+                        window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
                       }}
-                      className="flex-1 rounded-lg bg-dunk-500 px-5 py-3 text-xs font-bold text-white transition hover:bg-dunk-400 active:scale-95"
+                      className="flex-1 cursor-pointer rounded-lg bg-dunk-500 px-5 py-3 text-xs font-bold text-white transition hover:bg-dunk-400 active:scale-95 shadow-lg shadow-dunk-500/20"
                     >
-                      {summary.isFreeMode ? "Confirmer et fermer" : "Fermer"}
+                      {summary.isFreeMode ? "Confirmer et fermer [Échap]" : "Fermer [Échap]"}
                     </button>
                   </div>
                 </div>

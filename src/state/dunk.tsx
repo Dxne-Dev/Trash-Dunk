@@ -100,8 +100,18 @@ export function DunkProvider({
   const [queue, setQueue] = useState<DunkFile[]>(() => initialFiles ?? randomFiles(5));
 
   useEffect(() => {
-    if (initialFiles) {
+    if (initialFiles !== undefined) {
       setQueue(initialFiles);
+      setSummary(null);
+      inSessionRef.current = true;
+      sessionRef.current = { dunks: 0, skipped: 0, swishes: 0, score: 0, best: 0 };
+      setTrashed([]);
+      setSkipped(0);
+      setScore(0);
+      setStreak(0);
+      setShots(0);
+      setSwishes(0);
+      setAirballs(0);
     }
   }, [initialFiles]);
   const [trashed, setTrashed] = useState<DunkFile[]>([]);

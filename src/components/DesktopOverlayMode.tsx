@@ -27,7 +27,7 @@ export function DesktopOverlayMode() {
 
     const refreshFiles = () => {
       invoke<TargetFile[]>("get_target_files_info").then((files) => {
-        setTargetFiles(files);
+        setTargetFiles([...files]);
       });
     };
 

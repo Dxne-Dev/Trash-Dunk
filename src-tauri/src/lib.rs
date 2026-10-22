@@ -178,6 +178,10 @@ fn get_target_files_info() -> Vec<TargetFileInfo> {
 
 #[tauri::command]
 fn close_overlay(app: AppHandle) {
+    {
+        let mut lock = COLLECTED_FILES.lock().unwrap();
+        lock.clear();
+    }
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.hide();
     }
@@ -215,7 +219,18 @@ fn add_files_from_args(args: &[String]) {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
-            // Quand un 2e fichier arrive via clic droit multiple : on l'ajoute à la même session !
+            // Si la fenêtre principale était masquée (session précédente terminée), on vide les anciens fichiers
+            let was_hidden = app
+                .get_webview_window("main")
+                .map(|w| !w.is_visible().unwrap_or(true))
+                .unwrap_or(false);
+
+            if was_hidden {
+                let mut lock = COLLECTED_FILES.lock().unwrap();
+                lock.clear();
+            }
+
+            // Quand un ou plusieurs fichiers arrivent via clic droit : on ajoute à la session
             add_files_from_args(&args);
             let _ = app.emit("trashdunk:files_updated", ());
             if let Some(w) = app.get_webview_window("main") {

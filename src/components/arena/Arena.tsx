@@ -1192,14 +1192,14 @@ export function Arena({
                     Session terminée
                   </div>
                   <div className="display mt-2 text-[48px] leading-none text-chalk">
-                    {trashed.length} <span className="text-swish">fichier{trashed.length > 1 ? "s" : ""} supprimé{trashed.length > 1 ? "s" : ""}</span>
+                    {summary.dunks} <span className="text-swish">fichier{summary.dunks > 1 ? "s" : ""} supprimé{summary.dunks > 1 ? "s" : ""}</span>
                   </div>
                   <p className="mt-2 text-xs text-chalk-dim">
-                    Envoyé{trashed.length > 1 ? "s" : ""} dans la corbeille Windows native. Récupérable{trashed.length > 1 ? "s" : ""} à tout moment.
+                    Envoyé{summary.dunks > 1 ? "s" : ""} dans la corbeille Windows native. Récupérable{summary.dunks > 1 ? "s" : ""} à tout moment.
                   </p>
                   <div className="mt-5 grid grid-cols-2 gap-2 overflow-hidden rounded-lg border border-arena-800 bg-arena-900/80 p-2">
-                    <Mini label="Swishs réussis" value={`${swishes}`} />
-                    <Mini label="Score total" value={score.toLocaleString("fr-FR")} />
+                    <Mini label="Swishs réussis" value={`${summary.swishes ?? swishes}`} />
+                    <Mini label="Score total" value={(summary.score ?? score).toLocaleString("fr-FR")} />
                   </div>
                   <div className="mt-6 flex flex-wrap gap-2.5">
                     <button

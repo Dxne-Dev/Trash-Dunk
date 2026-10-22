@@ -3,6 +3,10 @@ import { invoke } from "@tauri-apps/api/core";
 import { sfx } from "@/lib/audio";
 import { extMeta } from "@/lib/files";
 import type { DunkFile } from "@/lib/files";
+import { TRAINING_LEVELS, type TrainingLevel } from "@/lib/trainingLevels";
+import { TrainingHUD } from "./TrainingHUD";
+import { LevelCompleteModal } from "./LevelCompleteModal";
+import { LevelFailedModal } from "./LevelFailedModal";
 import {
   BASE_POINTS,
   RESULT_LABEL,
@@ -155,6 +159,17 @@ export function Arena({
   const [colorMode, setColorMode] = useState<HoopColorMode>("normal");
   const [sunsetMisses, setSunsetMisses] = useState(0);
   const [iceTriggerId, setIceTriggerId] = useState(0);
+
+  /* ---------- Mini-Jeu Mode Entraînement (Camp d'entraînement) ---------- */
+  const [levelIndex, setLevelIndex] = useState(0);
+  const [levelBaskets, setLevelBaskets] = useState(0);
+  const [levelSwishes, setLevelSwishes] = useState(0);
+  const [levelStreak, setLevelStreak] = useState(0);
+  const [levelCold, setLevelCold] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [levelModalState, setLevelModalState] = useState<"playing" | "complete" | "failed">("playing");
+  const [levelFailReason, setLevelFailReason] = useState("");
+  const levelStartTimeRef = useRef(Date.now());
 
   const colorModeRef = useRef<HoopColorMode>("normal");
   const swishStreakRef = useRef(0);
@@ -562,6 +577,40 @@ export function Arena({
       onFileDunked(file.name);
     }
 
+    // Mini-jeu : calcul des objectifs de niveau
+    if (d.isFreeMode && levelModalState === "playing") {
+      const curLvl = TRAINING_LEVELS[levelIndex];
+      if (curLvl) {
+        const nextBaskets = o.made ? levelBaskets + 1 : levelBaskets;
+        const nextSwishes = o.kind === "swish" ? levelSwishes + 1 : levelSwishes;
+        const nextStreak = o.made ? levelStreak + 1 : 0;
+        const nextCold = triggeredCold || levelCold;
+
+        if (o.made) setLevelBaskets(nextBaskets);
+        if (o.kind === "swish") setLevelSwishes(nextSwishes);
+        setLevelStreak(nextStreak);
+        if (triggeredCold) setLevelCold(true);
+
+        let completed = false;
+        if (curLvl.targetBaskets && curLvl.targetSwishes) {
+          completed = nextBaskets >= curLvl.targetBaskets && nextSwishes >= curLvl.targetSwishes;
+        } else if (curLvl.targetBaskets) {
+          completed = nextBaskets >= curLvl.targetBaskets;
+        } else if (curLvl.targetSwishes) {
+          completed = nextSwishes >= curLvl.targetSwishes;
+        } else if (curLvl.targetStreak) {
+          completed = nextStreak >= curLvl.targetStreak;
+        } else if (curLvl.targetCold) {
+          completed = nextCold;
+        }
+
+        if (completed) {
+          sfx.play("swish");
+          setLevelModalState("complete");
+        }
+      }
+    }
+
     showBanner({ kind: o.kind, delta: o.delta, pts: o.points, weak: o.weak }, triggeredCold ? 620 : 1750);
     d.registerShot(file, o);
     setShownFile(next);
@@ -843,6 +892,37 @@ export function Arena({
       window.removeEventListener("pointercancel", up);
     };
   }, [G, shoot]);
+
+  /* ---------- Chronomètre et logique de Niveau du Mini-Jeu ---------- */
+  const startLevel = useCallback((idx: number) => {
+    const lvl = TRAINING_LEVELS[idx];
+    if (!lvl) return;
+    setLevelIndex(idx);
+    setLevelBaskets(0);
+    setLevelSwishes(0);
+    setLevelStreak(0);
+    setLevelCold(false);
+    setTimeLeft(lvl.targetSeconds);
+    setLevelModalState("playing");
+    levelStartTimeRef.current = Date.now();
+  }, []);
+
+  useEffect(() => {
+    if (!d.isFreeMode || levelModalState !== "playing") return;
+    const interval = window.setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          window.clearInterval(interval);
+          sfx.play("error");
+          setLevelFailReason("Temps écoulé avant d'atteindre l'objectif du niveau.");
+          setLevelModalState("failed");
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [d.isFreeMode, levelModalState]);
 
   /* ---------- clavier ---------- */
   useEffect(() => {
@@ -1194,6 +1274,56 @@ export function Arena({
                   ))}
                 </span>
               </div>
+            )}
+
+            {/* HUD Mini-Jeu Mode Entraînement */}
+            {d.isFreeMode && levelModalState === "playing" && (
+              <TrainingHUD
+                levelIndex={levelIndex}
+                basketsInLevel={levelBaskets}
+                swishesInLevel={levelSwishes}
+                streakInLevel={levelStreak}
+                coldTriggered={levelCold}
+                timeLeft={timeLeft}
+                onQuit={() => {
+                  window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+                }}
+              />
+            )}
+
+            {/* Modal Succès Niveau */}
+            {d.isFreeMode && levelModalState === "complete" && (
+              <LevelCompleteModal
+                levelIndex={levelIndex}
+                timeSpent={Math.max(1, Math.round((Date.now() - levelStartTimeRef.current) / 1000))}
+                score={score}
+                onNextLevel={() => {
+                  sfx.play("ui");
+                  startLevel(levelIndex + 1);
+                }}
+                onReplay={() => {
+                  sfx.play("ui");
+                  startLevel(levelIndex);
+                }}
+                onQuit={() => {
+                  window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+                }}
+              />
+            )}
+
+            {/* Modal Échec Niveau */}
+            {d.isFreeMode && levelModalState === "failed" && (
+              <LevelFailedModal
+                levelIndex={levelIndex}
+                reason={levelFailReason}
+                onRetry={() => {
+                  sfx.play("ui");
+                  startLevel(levelIndex);
+                }}
+                onQuit={() => {
+                  window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+                }}
+              />
             )}
 
             {/* fin de session */}

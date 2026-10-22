@@ -306,7 +306,7 @@ pub fn run() {
             let toggle_free_i = CheckMenuItem::with_id(
                 app,
                 "toggle_free",
-                "Mode sans fichier (Ballons illimités)",
+                "Mini-Jeu : Camp d'entraînement 🏆",
                 true,
                 false,
                 None::<&str>,

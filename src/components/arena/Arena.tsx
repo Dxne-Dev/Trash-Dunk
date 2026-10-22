@@ -170,6 +170,14 @@ export function Arena({
   const [levelModalState, setLevelModalState] = useState<"playing" | "complete" | "failed">("playing");
   const [levelFailReason, setLevelFailReason] = useState("");
   const levelStartTimeRef = useRef(Date.now());
+  const levelIndexRef = useRef(0);
+  const levelModalStateRef = useRef<"playing" | "complete" | "failed">("playing");
+  const levelStatsRef = useRef({
+    baskets: 0,
+    swishes: 0,
+    streak: 0,
+    cold: false,
+  });
 
   const colorModeRef = useRef<HoopColorMode>("normal");
   const swishStreakRef = useRef(0);
@@ -577,19 +585,25 @@ export function Arena({
       onFileDunked(file.name);
     }
 
-    // Mini-jeu : calcul des objectifs de niveau
-    if (d.isFreeMode && levelModalState === "playing") {
-      const curLvl = TRAINING_LEVELS[levelIndex];
+    // Mini-jeu : calcul des objectifs de niveau (via refs synchrones pour éliminer toute stale closure)
+    if (d.isFreeMode && levelModalStateRef.current === "playing") {
+      const curLvl = TRAINING_LEVELS[levelIndexRef.current];
       if (curLvl) {
-        const nextBaskets = o.made ? levelBaskets + 1 : levelBaskets;
-        const nextSwishes = o.kind === "swish" ? levelSwishes + 1 : levelSwishes;
-        const nextStreak = o.made ? levelStreak + 1 : 0;
-        const nextCold = triggeredCold || levelCold;
+        const stats = levelStatsRef.current;
+        const nextBaskets = o.made ? stats.baskets + 1 : stats.baskets;
+        const nextSwishes = o.kind === "swish" ? stats.swishes + 1 : stats.swishes;
+        const nextStreak = o.made ? stats.streak + 1 : 0;
+        const nextCold = triggeredCold || stats.cold;
+
+        stats.baskets = nextBaskets;
+        stats.swishes = nextSwishes;
+        stats.streak = nextStreak;
+        stats.cold = nextCold;
 
         if (o.made) setLevelBaskets(nextBaskets);
         if (o.kind === "swish") setLevelSwishes(nextSwishes);
         setLevelStreak(nextStreak);
-        if (triggeredCold) setLevelCold(true);
+        if (nextCold) setLevelCold(true);
 
         let completed = false;
         if (curLvl.targetBaskets && curLvl.targetSwishes) {
@@ -606,6 +620,7 @@ export function Arena({
 
         if (completed) {
           sfx.play("swish");
+          levelModalStateRef.current = "complete";
           setLevelModalState("complete");
         }
       }
@@ -897,6 +912,11 @@ export function Arena({
   const startLevel = useCallback((idx: number) => {
     const lvl = TRAINING_LEVELS[idx];
     if (!lvl) return;
+    levelIndexRef.current = idx;
+    levelModalStateRef.current = "playing";
+    levelStatsRef.current = { baskets: 0, swishes: 0, streak: 0, cold: false };
+    levelStartTimeRef.current = Date.now();
+
     setLevelIndex(idx);
     setLevelBaskets(0);
     setLevelSwishes(0);
@@ -904,8 +924,23 @@ export function Arena({
     setLevelCold(false);
     setTimeLeft(lvl.targetSeconds);
     setLevelModalState("playing");
-    levelStartTimeRef.current = Date.now();
-  }, []);
+
+    resetColorState();
+    G.phase = "idle";
+    G.flight = null;
+    G.ret = null;
+    G.outcome = null;
+    G.power = 0;
+    G.drag = { x: 0, y: 0 };
+    setPhase("idle");
+  }, [G, resetColorState]);
+
+  // Réinitialisation automatique au Niveau 1 dès que le mode entraînement est activé
+  useEffect(() => {
+    if (d.isFreeMode) {
+      startLevel(0);
+    }
+  }, [d.isFreeMode, startLevel]);
 
   useEffect(() => {
     if (!d.isFreeMode || levelModalState !== "playing") return;
@@ -915,6 +950,7 @@ export function Arena({
           window.clearInterval(interval);
           sfx.play("error");
           setLevelFailReason("Temps écoulé avant d'atteindre l'objectif du niveau.");
+          levelModalStateRef.current = "failed";
           setLevelModalState("failed");
           return 0;
         }
@@ -933,6 +969,7 @@ export function Arena({
           // En mode desktop, Échap ferme directement l'overlay sans exception
           sfx.play("ui");
           d.dismissSummary();
+          startLevel(0);
           invoke("close_overlay");
           return;
         }
@@ -1318,7 +1355,7 @@ export function Arena({
                 reason={levelFailReason}
                 onRetry={() => {
                   sfx.play("ui");
-                  startLevel(levelIndex);
+                  startLevel(0);
                 }}
                 onQuit={() => {
                   window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
@@ -1328,7 +1365,11 @@ export function Arena({
 
             {/* fin de session */}
             {summary && (
-              <div className="pointer-events-auto absolute inset-0 z-30 flex items-center justify-center bg-black/75 p-6 backdrop-blur-md">
+              <div
+                className="pointer-events-auto absolute inset-0 z-30 flex items-center justify-center bg-black/75 p-6 backdrop-blur-md"
+                onPointerDown={(e) => e.stopPropagation()}
+                onPointerUp={(e) => e.stopPropagation()}
+              >
                 <div className="anim-pop w-full max-w-md rounded-2xl border border-arena-600 bg-arena-950 p-6 shadow-2xl text-center">
                   <div className="display text-[13px] tracking-[0.28em] text-dunk-400 uppercase">
                     {summary.isFreeMode ? "Entraînement terminé" : "Session terminée"}

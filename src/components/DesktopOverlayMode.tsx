@@ -61,6 +61,7 @@ export function DesktopOverlayMode() {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
+        setIsFreeMode(false);
         invoke("close_overlay");
       }
     };

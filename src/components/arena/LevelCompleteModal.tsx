@@ -21,7 +21,11 @@ export function LevelCompleteModal({
   const hasNext = levelIndex + 1 < TRAINING_LEVELS.length;
 
   return (
-    <div className="pointer-events-auto absolute inset-0 z-40 flex items-center justify-center bg-black/80 p-6 backdrop-blur-md animate-in zoom-in-95">
+    <div
+      className="pointer-events-auto absolute inset-0 z-40 flex items-center justify-center bg-black/80 p-6 backdrop-blur-md animate-in zoom-in-95"
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
+    >
       <div className="w-full max-w-md rounded-2xl border border-swish/70 bg-arena-950 p-6 shadow-2xl text-center">
         <div className="display text-[13px] tracking-[0.28em] text-swish uppercase font-bold">
           Mission Réussie ! 🏆

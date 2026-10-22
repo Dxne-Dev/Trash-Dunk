@@ -1226,6 +1226,7 @@ export function Arena({
                       <button
                         onClick={() => {
                           sfx.play("ui");
+                          d.dismissSummary();
                           if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
                             import("@tauri-apps/api/core").then(({ invoke }) => {
                               invoke("open_recycle_bin");
@@ -1241,12 +1242,11 @@ export function Arena({
                     <button
                       onClick={() => {
                         sfx.play("ui");
+                        d.dismissSummary();
                         if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
                           import("@tauri-apps/api/core").then(({ invoke }) => {
                             invoke("close_overlay");
                           });
-                        } else {
-                          d.dismissSummary();
                         }
                       }}
                       className="flex-1 rounded-lg bg-dunk-500 px-5 py-3 text-xs font-bold text-white transition hover:bg-dunk-400 active:scale-95"

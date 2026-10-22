@@ -1189,33 +1189,55 @@ export function Arena({
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/75 p-6 backdrop-blur-md">
                 <div className="anim-pop w-full max-w-md rounded-2xl border border-arena-600 bg-arena-950 p-6 shadow-2xl text-center">
                   <div className="display text-[13px] tracking-[0.28em] text-dunk-400 uppercase">
-                    Session terminée
+                    {summary.isFreeMode ? "Entraînement terminé" : "Session terminée"}
                   </div>
-                  <div className="display mt-2 text-[48px] leading-none text-chalk">
-                    {summary.dunks} <span className="text-swish">fichier{summary.dunks > 1 ? "s" : ""} supprimé{summary.dunks > 1 ? "s" : ""}</span>
+                  <div className="display mt-2 text-[44px] leading-none text-chalk">
+                    {summary.isFreeMode ? (
+                      <>
+                        {summary.dunks} <span className="text-swish">panier{summary.dunks > 1 ? "s" : ""} réussi{summary.dunks > 1 ? "s" : ""}</span>
+                      </>
+                    ) : (
+                      <>
+                        {summary.dunks} <span className="text-swish">fichier{summary.dunks > 1 ? "s" : ""} supprimé{summary.dunks > 1 ? "s" : ""}</span>
+                      </>
+                    )}
                   </div>
                   <p className="mt-2 text-xs text-chalk-dim">
-                    Envoyé{summary.dunks > 1 ? "s" : ""} dans la corbeille Windows native. Récupérable{summary.dunks > 1 ? "s" : ""} à tout moment.
+                    {summary.isFreeMode
+                      ? "Mode sans fichier : aucun fichier sur votre disque n'a été affecté."
+                      : `Envoyé${summary.dunks > 1 ? "s" : ""} dans la corbeille Windows native. Récupérable${summary.dunks > 1 ? "s" : ""} à tout moment.`}
                   </p>
-                  <div className="mt-5 grid grid-cols-2 gap-2 overflow-hidden rounded-lg border border-arena-800 bg-arena-900/80 p-2">
+                  <div className="mt-5 grid grid-cols-3 gap-2 overflow-hidden rounded-lg border border-arena-800 bg-arena-900/80 p-2">
                     <Mini label="Swishs réussis" value={`${summary.swishes ?? swishes}`} />
                     <Mini label="Score total" value={(summary.score ?? score).toLocaleString("fr-FR")} />
+                    <Mini
+                      label="Temps de jeu"
+                      value={
+                        summary.durationSeconds !== undefined
+                          ? summary.durationSeconds >= 60
+                            ? `${Math.floor(summary.durationSeconds / 60)}m ${summary.durationSeconds % 60}s`
+                            : `${summary.durationSeconds}s`
+                          : "—"
+                      }
+                    />
                   </div>
                   <div className="mt-6 flex flex-wrap gap-2.5">
-                    <button
-                      onClick={() => {
-                        sfx.play("ui");
-                        if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
-                          import("@tauri-apps/api/core").then(({ invoke }) => {
-                            invoke("open_recycle_bin");
-                            invoke("close_overlay");
-                          });
-                        }
-                      }}
-                      className="flex-1 rounded-lg bg-swish/20 border border-swish/50 px-4 py-3 text-xs font-bold text-swish transition hover:bg-swish/30 active:scale-95"
-                    >
-                      🗑️ Ouvrir la corbeille
-                    </button>
+                    {!summary.isFreeMode && (
+                      <button
+                        onClick={() => {
+                          sfx.play("ui");
+                          if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+                            import("@tauri-apps/api/core").then(({ invoke }) => {
+                              invoke("open_recycle_bin");
+                              invoke("close_overlay");
+                            });
+                          }
+                        }}
+                        className="flex-1 rounded-lg bg-swish/20 border border-swish/50 px-4 py-3 text-xs font-bold text-swish transition hover:bg-swish/30 active:scale-95"
+                      >
+                        🗑️ Ouvrir la corbeille
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         sfx.play("ui");
@@ -1227,9 +1249,9 @@ export function Arena({
                           d.dismissSummary();
                         }
                       }}
-                      className="rounded-lg bg-dunk-500 px-5 py-3 text-xs font-bold text-white transition hover:bg-dunk-400 active:scale-95"
+                      className="flex-1 rounded-lg bg-dunk-500 px-5 py-3 text-xs font-bold text-white transition hover:bg-dunk-400 active:scale-95"
                     >
-                      Fermer
+                      {summary.isFreeMode ? "Confirmer et fermer" : "Fermer"}
                     </button>
                   </div>
                 </div>
@@ -1267,29 +1289,60 @@ export function Arena({
           }`}
         >
           <div className="min-w-0 flex-1">
-            <div className="display mb-1.5 text-[12px] tracking-[0.24em] text-chalk-dim/70">File d'attente</div>
+            <div className="display mb-1.5 flex items-center justify-between text-[12px] tracking-[0.24em] text-chalk-dim/70">
+              <span>{d.isFreeMode ? "File d'attente (Mode Illimité)" : "File d'attente"}</span>
+              {d.isFreeMode && (
+                <span className="text-[10px] text-dunk-400 font-sans tracking-normal font-semibold">
+                  Entraînement actif
+                </span>
+              )}
+            </div>
             <div className="flex flex-wrap items-center gap-1.5">
-              {queue.length === 0 && <span className="text-xs text-arena-500">— aucun fichier —</span>}
-              {queue.slice(0, 8).map((f, i) => {
-                const m = extMeta(f.ext);
-                return (
-                  <span
-                    key={f.id}
-                    className={`flex max-w-[190px] items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] transition ${
-                      i === 0
-                        ? "border-dunk-500/70 bg-dunk-700/25 text-chalk"
-                        : "border-arena-700 bg-arena-850 text-chalk-dim"
-                    }`}
-                  >
-                    <span className="h-2.5 w-2.5 shrink-0 rounded-[2px]" style={{ background: m.bg }} />
-                    <span className="truncate">{f.name}</span>
-                    <span className="shrink-0 text-[9px] text-arena-500">.{f.ext}</span>
-                  </span>
-                );
-              })}
-              {queue.length > 8 && <span className="text-[11px] text-arena-500">+{queue.length - 8}</span>}
+              {d.isFreeMode ? (
+                <span className="flex items-center gap-2 rounded-md border border-dunk-500/70 bg-dunk-700/25 px-3 py-1 text-sm font-bold text-chalk">
+                  <span>🏀</span>
+                  <span className="text-xl leading-none text-swish">∞</span>
+                  <span className="text-xs text-chalk-dim">Ballons illimités</span>
+                </span>
+              ) : (
+                <>
+                  {queue.length === 0 && <span className="text-xs text-arena-500">— aucun fichier —</span>}
+                  {queue.slice(0, 8).map((f, i) => {
+                    const m = extMeta(f.ext);
+                    return (
+                      <span
+                        key={f.id}
+                        className={`flex max-w-[190px] items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] transition ${
+                          i === 0
+                            ? "border-dunk-500/70 bg-dunk-700/25 text-chalk"
+                            : "border-arena-700 bg-arena-850 text-chalk-dim"
+                        }`}
+                      >
+                        <span className="h-2.5 w-2.5 shrink-0 rounded-[2px]" style={{ background: m.bg }} />
+                        <span className="truncate">{f.name}</span>
+                        <span className="shrink-0 text-[9px] text-arena-500">.{f.ext}</span>
+                      </span>
+                    );
+                  })}
+                  {queue.length > 8 && <span className="text-[11px] text-arena-500">+{queue.length - 8}</span>}
+                </>
+              )}
             </div>
           </div>
+
+          {d.isFreeMode && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  sfx.play("ui");
+                  d.requestEndSession?.();
+                }}
+                className="rounded-lg border border-red-500/50 bg-red-950/60 px-4 py-2 text-xs font-bold text-red-200 transition hover:bg-red-900/80 active:scale-95 shadow-md"
+              >
+                Terminer la session
+              </button>
+            </div>
+          )}
 
           {!transparent && (
             <div className="flex flex-wrap items-center gap-2">

@@ -38,6 +38,8 @@ export type Summary = {
   score: number;
   streak: number;
   swishes: number;
+  durationSeconds?: number;
+  isFreeMode?: boolean;
 };
 
 type Persisted = { totalDunks: number; bestStreak: number; sessions: number };
@@ -84,6 +86,8 @@ type DunkCtx = {
   pushToast: (t: Omit<Toast, "id">) => void;
   dismissToast: (id: string) => void;
   toggleSound: () => void;
+  isFreeMode?: boolean;
+  requestEndSession?: () => void;
 };
 
 const Ctx = createContext<DunkCtx | null>(null);
@@ -93,18 +97,43 @@ let tid = 0;
 export function DunkProvider({
   children,
   initialFiles,
+  isFreeMode = false,
 }: {
   children: ReactNode;
   initialFiles?: DunkFile[];
+  isFreeMode?: boolean;
 }) {
-  const [queue, setQueue] = useState<DunkFile[]>(() => initialFiles ?? randomFiles(5));
+  const FREE_BALL_TEMPLATE: DunkFile = useMemo(
+    () => ({ id: "free_ball_active", name: "Ballon d'entraînement", ext: "🏀", sizeKb: 0 }),
+    []
+  );
+
+  const [queue, setQueue] = useState<DunkFile[]>(() =>
+    isFreeMode ? [FREE_BALL_TEMPLATE] : initialFiles ?? randomFiles(5)
+  );
+
+  const startTimeRef = useRef<number>(Date.now());
 
   useEffect(() => {
-    if (initialFiles !== undefined) {
+    if (isFreeMode) {
+      setQueue([FREE_BALL_TEMPLATE]);
+      setSummary(null);
+      inSessionRef.current = true;
+      sessionRef.current = { dunks: 0, skipped: 0, swishes: 0, score: 0, best: 0 };
+      startTimeRef.current = Date.now();
+      setTrashed([]);
+      setSkipped(0);
+      setScore(0);
+      setStreak(0);
+      setShots(0);
+      setSwishes(0);
+      setAirballs(0);
+    } else if (initialFiles !== undefined) {
       setQueue(initialFiles);
       setSummary(null);
       inSessionRef.current = true;
       sessionRef.current = { dunks: 0, skipped: 0, swishes: 0, score: 0, best: 0 };
+      startTimeRef.current = Date.now();
       setTrashed([]);
       setSkipped(0);
       setScore(0);
@@ -113,7 +142,7 @@ export function DunkProvider({
       setSwishes(0);
       setAirballs(0);
     }
-  }, [initialFiles]);
+  }, [initialFiles, isFreeMode, FREE_BALL_TEMPLATE]);
   const [trashed, setTrashed] = useState<DunkFile[]>([]);
   const [skipped, setSkipped] = useState(0);
   const [score, setScore] = useState(0);
@@ -162,31 +191,34 @@ export function DunkProvider({
       const s = sessionRef.current;
       if (!inSessionRef.current) return;
       inSessionRef.current = false;
+      const durationSeconds = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000));
       setPersisted((p) => ({
         totalDunks: p.totalDunks + s.dunks,
         bestStreak: Math.max(p.bestStreak, s.best),
         sessions: p.sessions + 1,
       }));
-      if (mode === "complete" && s.dunks + s.skipped > 0) {
+      if ((mode === "complete" || isFreeMode) && s.dunks + s.skipped > 0) {
         setSummary({
           dunks: s.dunks,
           skipped: s.skipped,
           score: s.score,
           streak: s.best,
           swishes: s.swishes,
+          durationSeconds,
+          isFreeMode,
         });
         pushToast({
           app: "TrashDunk",
           tone: "success",
-          title: `Session terminée — ${s.dunks} fichier${s.dunks > 1 ? "s" : ""} dunké${s.dunks > 1 ? "s" : ""}`,
-          body: `${s.score} pts · meilleur streak ${s.best} · ${s.skipped} renvoyé${s.skipped > 1 ? "s" : ""} sur le disque`,
+          title: `Session terminée — ${s.dunks} ${isFreeMode ? "panier" : "fichier"}${s.dunks > 1 ? "s" : ""} dunké${s.dunks > 1 ? "s" : ""}`,
+          body: `${s.score} pts · meilleur streak ${s.best} · ${s.swishes} swishs · ${Math.floor(durationSeconds / 60)}m ${durationSeconds % 60}s`,
         });
       } else {
         pushToast({
           app: "TrashDunk",
           tone: "warn",
-          title: "Session annulée",
-          body: "Rien n'a été déplacé. Vos fichiers sont toujours sur le disque.",
+          title: "Session terminée",
+          body: isFreeMode ? "Entraînement terminé !" : "Rien n'a été déplacé. Vos fichiers sont toujours sur le disque.",
         });
       }
       sessionRef.current = { dunks: 0, skipped: 0, swishes: 0, score: 0, best: 0 };
@@ -198,7 +230,7 @@ export function DunkProvider({
       setSwishes(0);
       setAirballs(0);
     },
-    [pushToast]
+    [pushToast, isFreeMode]
   );
 
   const startSessionIfNeeded = useCallback(() => {
@@ -239,16 +271,23 @@ export function DunkProvider({
         setStreak(nextStreak);
         setScore((v) => v + o.points);
         if (o.kind === "swish") setSwishes((v) => v + 1);
-        setQueue((q) => q.filter((f) => f.id !== file.id));
+        if (isFreeMode) {
+          // En mode ballon illimité : le ballon ne disparaît jamais de la file, on en génère un nouveau
+          setQueue([{ ...FREE_BALL_TEMPLATE, id: `free_${Date.now()}` }]);
+        } else {
+          setQueue((q) => q.filter((f) => f.id !== file.id));
+        }
         setTrashed((t) => [...t, file]);
         setPersisted((p) => ({ ...p, bestStreak: Math.max(p.bestStreak, nextStreak) }));
       } else {
         setStreak(0);
         if (o.kind === "airball") setAirballs((v) => v + 1);
-        setQueue((q) => (q.length > 1 ? [...q.filter((f) => f.id !== file.id), file] : q));
+        if (!isFreeMode) {
+          setQueue((q) => (q.length > 1 ? [...q.filter((f) => f.id !== file.id), file] : q));
+        }
       }
     },
-    [streak]
+    [streak, isFreeMode, FREE_BALL_TEMPLATE]
   );
 
   const skipActive = useCallback(() => {
@@ -273,16 +312,20 @@ export function DunkProvider({
 
   const dismissSummary = useCallback(() => setSummary(null), []);
 
+  const requestEndSession = useCallback(() => {
+    finishSession("complete");
+  }, [finishSession]);
+
   // SEUL temps mort du jeu : quand tous les tirs sont terminés
   // (file vide), on attend 3 s avant d'afficher le résumé de fin de session
   const prevLen = useRef(queue.length);
   useEffect(() => {
-    if (prevLen.current > 0 && queue.length === 0 && inSessionRef.current) {
+    if (!isFreeMode && prevLen.current > 0 && queue.length === 0 && inSessionRef.current) {
       const t = window.setTimeout(() => finishSession("complete"), 3000);
       return () => window.clearTimeout(t);
     }
     prevLen.current = queue.length;
-  }, [queue.length, finishSession]);
+  }, [queue.length, finishSession, isFreeMode]);
 
   const toggleSound = useCallback(() => setSoundOn((v) => !v), []);
 
@@ -310,6 +353,8 @@ export function DunkProvider({
       pushToast,
       dismissToast,
       toggleSound,
+      isFreeMode,
+      requestEndSession,
     }),
     [
       queue,
@@ -334,6 +379,8 @@ export function DunkProvider({
       pushToast,
       dismissToast,
       toggleSound,
+      isFreeMode,
+      requestEndSession,
     ]
   );
 

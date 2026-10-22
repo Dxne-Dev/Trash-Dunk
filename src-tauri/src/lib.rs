@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Mutex;
 use tauri::{
-    menu::{Menu, MenuItem},
+    menu::{CheckMenuItem, Menu, MenuItem, Submenu},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Emitter, Manager,
 };
@@ -14,6 +14,7 @@ use winreg::enums::*;
 use winreg::RegKey;
 
 static COLLECTED_FILES: Mutex<Vec<String>> = Mutex::new(Vec::new());
+static FREE_MODE: Mutex<bool> = Mutex::new(false);
 
 #[derive(Serialize, Deserialize, Default)]
 struct AppConfig {
@@ -198,10 +199,32 @@ fn get_target_files_info() -> Vec<TargetFileInfo> {
 }
 
 #[tauri::command]
+fn get_free_mode() -> bool {
+    *FREE_MODE.lock().unwrap()
+}
+
+#[tauri::command]
+fn set_free_mode(app: AppHandle, enabled: bool) {
+    {
+        let mut lock = FREE_MODE.lock().unwrap();
+        *lock = enabled;
+    }
+    let _ = app.emit("trashdunk:free_mode_changed", enabled);
+}
+
+#[tauri::command]
 fn close_overlay(app: AppHandle) {
     {
         let mut lock = COLLECTED_FILES.lock().unwrap();
         lock.clear();
+    }
+    // Si on était en mode sans fichier, on repasse automatiquement sur OFF
+    {
+        let mut f_lock = FREE_MODE.lock().unwrap();
+        if *f_lock {
+            *f_lock = false;
+            let _ = app.emit("trashdunk:free_mode_changed", false);
+        }
     }
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.hide();
@@ -272,16 +295,43 @@ pub fn run() {
             let is_background = args.iter().any(|a| a == "--background");
             let has_files = args.iter().skip(1).any(|a| !a.starts_with("--"));
 
+            let toggle_free_i = CheckMenuItem::with_id(
+                app,
+                "toggle_free",
+                "Mode sans fichier (Ballons illimités)",
+                true,
+                false,
+                None::<&str>,
+            )?;
+
+            let settings_menu = Submenu::with_items(app, "Paramètres ⚙️", true, &[&toggle_free_i])?;
             let quit_i = MenuItem::with_id(app, "quit", "Quitter TrashDunk", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&quit_i])?;
+            let menu = Menu::with_items(app, &[&settings_menu, &quit_i])?;
+
+            let toggle_free_ref = toggle_free_i.clone();
 
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .tooltip("TrashDunk 🏀 - En veille silencieuse")
-                .on_menu_event(|app, event| {
+                .on_menu_event(move |app, event| {
                     if event.id.as_ref() == "quit" {
                         app.exit(0);
+                    } else if event.id.as_ref() == "toggle_free" {
+                        let new_state = {
+                            let mut lock = FREE_MODE.lock().unwrap();
+                            *lock = !*lock;
+                            *lock
+                        };
+                        let _ = toggle_free_ref.set_checked(new_state);
+                        let _ = app.emit("trashdunk:free_mode_changed", new_state);
+                        if new_state {
+                            if let Some(w) = app.get_webview_window("main") {
+                                let _ = w.set_fullscreen(true);
+                                let _ = w.show();
+                                let _ = w.set_focus();
+                            }
+                        }
                     }
                 })
                 .on_tray_icon_event(|tray, event| {
@@ -322,6 +372,8 @@ pub fn run() {
             send_to_recycle_bin,
             open_recycle_bin,
             get_target_files_info,
+            get_free_mode,
+            set_free_mode,
             close_overlay
         ])
         .run(tauri::generate_context!())

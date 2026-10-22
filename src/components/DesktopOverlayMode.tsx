@@ -14,6 +14,7 @@ interface TargetFile {
 export function DesktopOverlayMode() {
   const [status, setStatus] = useState<{ is_installed: boolean; is_onboarded: boolean } | null>(null);
   const [targetFiles, setTargetFiles] = useState<TargetFile[]>([]);
+  const [isFreeMode, setIsFreeMode] = useState(false);
   const [showInstaller, setShowInstaller] = useState(false);
   const [onboardingSuccess, setOnboardingSuccess] = useState(false);
 
@@ -25,6 +26,8 @@ export function DesktopOverlayMode() {
       }
     });
 
+    invoke<boolean>("get_free_mode").then((fm) => setIsFreeMode(fm));
+
     const refreshFiles = () => {
       invoke<TargetFile[]>("get_target_files_info").then((files) => {
         setTargetFiles([...files]);
@@ -33,13 +36,23 @@ export function DesktopOverlayMode() {
 
     refreshFiles();
 
-    // Écoute de l'événement Tauri quand d'autres fichiers sélectionnés arrivent en même temps
-    let unlisten: (() => void) | undefined;
+    // Écoute des événements Tauri
+    let unlistenFiles: (() => void) | undefined;
+    let unlistenFreeMode: (() => void) | undefined;
     import("@tauri-apps/api/event").then(({ listen }) => {
       listen("trashdunk:files_updated", () => {
         refreshFiles();
       }).then((u) => {
-        unlisten = u;
+        unlistenFiles = u;
+      });
+
+      listen<boolean>("trashdunk:free_mode_changed", (event) => {
+        setIsFreeMode(event.payload);
+        if (event.payload) {
+          refreshFiles();
+        }
+      }).then((u) => {
+        unlistenFreeMode = u;
       });
     });
 
@@ -51,11 +64,17 @@ export function DesktopOverlayMode() {
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      unlisten?.();
+      unlistenFiles?.();
+      unlistenFreeMode?.();
     };
   }, []);
 
   const handleShootSuccess = (fileName: string) => {
+    // En mode entraînement sans fichier, aucun fichier du disque n'est supprimé !
+    if (isFreeMode) {
+      return;
+    }
+
     // Retrouver le chemin absolu du fichier ciblé
     const found = targetFiles.find((f) => f.name === fileName || `${f.name}.${f.ext}` === fileName);
     const targetPath = found ? found.path : fileName;
@@ -95,7 +114,10 @@ export function DesktopOverlayMode() {
   }));
 
   return (
-    <DunkProvider initialFiles={dunkFiles.length > 0 ? dunkFiles : undefined}>
+    <DunkProvider
+      initialFiles={!isFreeMode && dunkFiles.length > 0 ? dunkFiles : undefined}
+      isFreeMode={isFreeMode}
+    >
       <div className="relative h-screen w-screen bg-transparent text-chalk overflow-hidden select-none pointer-events-none">
         {/* Toast / Bannière d'échauffement flottante en haut */}
         {!status.is_onboarded && !onboardingSuccess && (

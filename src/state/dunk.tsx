@@ -228,6 +228,7 @@ export function DunkProvider({
         });
       }
       sessionRef.current = { dunks: 0, skipped: 0, swishes: 0, score: 0, best: 0 };
+      startTimeRef.current = Date.now();
       setTrashed([]);
       setSkipped(0);
       setScore(0);
@@ -244,12 +245,21 @@ export function DunkProvider({
       inSessionRef.current = true;
       setSummary(null);
       sessionRef.current = { dunks: 0, skipped: 0, swishes: 0, score: 0, best: 0 };
+      startTimeRef.current = Date.now();
+      setTrashed([]);
+      setSkipped(0);
+      setScore(0);
+      setStreak(0);
+      setShots(0);
+      setSwishes(0);
+      setAirballs(0);
     }
   }, []);
 
   const addFiles = useCallback((files: DunkFile[]) => {
     if (!files.length) return;
     startSessionIfNeeded();
+    startTimeRef.current = Date.now();
     setQueue((q) => [...q, ...files]);
     setPulse((p) => p + 1);
   }, [startSessionIfNeeded]);
@@ -257,6 +267,7 @@ export function DunkProvider({
   const refill = useCallback(
     (n = 5) => {
       startSessionIfNeeded();
+      startTimeRef.current = Date.now();
       const exclude = queue.map((f) => f.name);
       setQueue((q) => [...q, ...randomFiles(n, exclude)]);
       setPulse((p) => p + 1);
@@ -266,7 +277,12 @@ export function DunkProvider({
 
   const registerShot = useCallback(
     (file: DunkFile, o: ShotOutcome) => {
-      setShots((s) => s + 1);
+      // Démarrer le chronomètre précisément au premier tir de la partie
+      const s = sessionRef.current;
+      if (s.dunks === 0 && s.skipped === 0 && s.score === 0) {
+        startTimeRef.current = Date.now();
+      }
+      setShots((prev) => prev + 1);
       if (o.made) {
         const s = sessionRef.current;
         s.dunks += 1;
@@ -313,6 +329,7 @@ export function DunkProvider({
 
   const cancelSession = useCallback(() => {
     setQueue([]);
+    startTimeRef.current = Date.now();
     finishSession("cancelled");
   }, [finishSession]);
 

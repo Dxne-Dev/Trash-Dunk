@@ -109,7 +109,7 @@ export function Download() {
                 </div>
                 <p className="mt-2 text-[12.5px] leading-relaxed text-chalk/85">
                   TrashDunk ne sait pas supprimer définitivement un fichier. Le seul chemin de sortie d'un dunk
-                  réussi est la corbeille Windows — et Échap annule la session sans écrire un octet.
+                  réussi mène à la corbeille Windows, et la touche Échap annule la session sans altérer aucun fichier.
                 </p>
               </div>
             </div>

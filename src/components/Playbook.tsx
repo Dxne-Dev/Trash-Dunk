@@ -93,7 +93,7 @@ const STEPS: Step[] = [
     n: "05",
     tag: "Résolution",
     title: "Corbeille réelle, ou rien du tout",
-    text: "Panier validé : le fichier part dans la corbeille Windows — jamais de suppression définitive. Air ball : il reste en place et vous retentez.",
+    text: "Panier validé : le fichier part dans la corbeille Windows, sans aucune suppression définitive. En cas d'air ball, il reste en place et vous pouvez retenter.",
     Diagram: () => (
       <svg viewBox="0 0 120 74" className="h-[74px] w-full">
         <path d="M12 26q22-16 40 4" className="text-chalk-dim" {...line} strokeDasharray="3 4" opacity="0.7" />

@@ -194,7 +194,7 @@ export function SpecSheet() {
           </div>
           <div className="flex items-center gap-2 border-t border-arena-800 bg-arena-900/60 px-4 py-2 text-[10.5px] text-arena-500">
             <span className="h-2 w-2 rounded-full bg-swish" />
-            <span className="font-mono">lecture seule — extrait du projet</span>
+            <span className="font-mono">lecture seule · extrait du projet</span>
           </div>
         </Reveal>
 

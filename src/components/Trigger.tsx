@@ -6,7 +6,7 @@ import { Reveal, SectionHead } from "./Chrome";
 const POINTS: Array<[string, string, string]> = [
   [
     "Additif, jamais substitué",
-    "Le verbe « Dunk it » s'ajoute en bas du menu contextuel. « Supprimer » reste exactement où Windows l'a mis — de quoi rassurer tout le monde à la maison comme au bureau.",
+    "Le verbe « Dunk it » s'ajoute en bas du menu contextuel, tandis que l'option « Supprimer » native reste intacte pour rassurer tout le monde à la maison comme au bureau.",
     "#43e39b",
   ],
   [
@@ -88,7 +88,7 @@ export function Trigger() {
                   app: "TrashDunk",
                   tone: "info",
                   title: "2 fichiers envoyés au terrain",
-                  body: "Chaîne de dunks démarrée — un ballon par fichier.",
+                  body: "Chaîne de dunks démarrée : un ballon par fichier.",
                 });
                 document.querySelector("#dunker")?.scrollIntoView({ behavior: "smooth", block: "center" });
               }}
@@ -102,7 +102,7 @@ export function Trigger() {
         <Reveal delay={90}>
           <ExplorerDemo />
           <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 px-1 text-[11.5px] text-chalk-dim/70">
-            <span>Maquette d'Explorateur — le clic droit est fonctionnel.</span>
+            <span>Maquette d'Explorateur interactive (faites un clic droit).</span>
             <span className="ml-auto flex items-center gap-2">
               <span className="inline-block h-2 w-2 rounded-full bg-dunk-500" />
               verbe enregistré par l'installeur

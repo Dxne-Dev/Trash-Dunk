@@ -288,7 +288,7 @@ export function SectionHead({
         </span>
         <div>
           <div className="mb-2 text-[10px] font-semibold tracking-[0.3em] text-chalk-dim/70 uppercase">{eyebrow}</div>
-          <h2 className="display text-[clamp(38px,6vw,72px)] leading-[0.84] text-chalk">{title}</h2>
+          <h2 className="display text-[clamp(38px,6vw,72px)] leading-[0.95] text-chalk">{title}</h2>
         </div>
       </div>
       {children && <div className="md:ml-auto md:max-w-sm md:pb-2">{children}</div>}

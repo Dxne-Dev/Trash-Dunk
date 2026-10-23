@@ -46,7 +46,7 @@ const TIERS: Tier[] = [
     label: "Air ball",
     color: "#ff4f5a",
     verdict: "Buzzer. Le public est méchant.",
-    pts: "0 pt — streak remis à zéro",
+    pts: "0 pt (streak remis à zéro)",
     effect: "Le fichier revient exactement à sa position initiale. Rien n'est perdu.",
   },
 ];
@@ -126,7 +126,7 @@ export function MeterAnatomy() {
           <p className="text-[15px] leading-relaxed text-chalk-dim">
             Appuyer, tirer vers le bas, relâcher. Le relâché fige l'aiguille <em className="text-chalk not-italic">et</em> déclenche
             le tir : pas de seconde action, pas de validation intermédiaire. Plus vous tirez fort, plus l'aiguille
-            oscille vite — et plus le dunk rapporte.
+            oscille vite, et plus le dunk rapporte de points.
           </p>
         </SectionHead>
       </Reveal>

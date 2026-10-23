@@ -228,7 +228,7 @@ export function ExplorerDemo() {
                         tone: "warn",
                         app: "Windows",
                         title: "Ouverture impossible",
-                        body: "Ceci est une maquette de démonstration — mais le clic droit, lui, fonctionne.",
+                        body: "Ceci est une maquette de démonstration, mais le clic droit est bien interactif.",
                       });
                     }}
                     className={`group grid cursor-default grid-cols-[minmax(0,1fr)_92px_78px] items-center gap-2 px-3 py-[7px] text-[12.5px] transition-colors sm:grid-cols-[minmax(0,1fr)_120px_92px_78px] ${

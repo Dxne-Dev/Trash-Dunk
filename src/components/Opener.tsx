@@ -26,7 +26,7 @@ export function Opener() {
               </span>
             </div>
 
-            <h1 className="display text-[clamp(44px,7.9vw,108px)] leading-[0.79]">
+            <h1 className="display flex flex-col gap-1 sm:gap-2 text-[clamp(42px,7.5vw,100px)] leading-[0.94] tracking-tight">
               <span className="block text-chalk">Supprimer</span>
               <span className="block text-chalk">un fichier</span>
               <span className="block text-dunk-500" style={{ textShadow: "0 0 60px rgba(234,90,36,.35)" }}>
@@ -38,8 +38,8 @@ export function Opener() {
             <p className="mt-6 max-w-xl text-[15.5px] leading-relaxed text-chalk-dim sm:text-[16.5px]">
               <b className="font-semibold text-chalk">TrashDunk</b> accroche un verbe « Dunk it » au clic droit de
               l'Explorateur. Un overlay transparent se pose sur le bureau, votre fichier devient un ballon, et il
-              faut le mettre au panier pour qu'il aille à la corbeille. Le terrain ci-dessous est la vraie mécanique
-              du jeu — drag, jauge, relâche.
+              faut le mettre au panier pour qu'il aille à la corbeille. Le terrain ci-dessous reproduit fidèlement
+              la vraie mécanique du jeu : visez, ajustez la jauge et relâchez le tir.
             </p>
 
             <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12px] text-chalk-dim/80">

@@ -15,7 +15,7 @@ const SEASONS: Season[] = [
   {
     code: "V1",
     name: "Rookie",
-    sub: "MVP — version 1 jouable",
+    sub: "MVP · version 1 jouable",
     color: "#eec491",
     progress: 100,
     status: "Livré",

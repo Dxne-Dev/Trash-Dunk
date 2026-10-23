@@ -216,7 +216,7 @@ export function DunkProvider({
         pushToast({
           app: "TrashDunk",
           tone: "success",
-          title: `Session terminée — ${s.dunks} ${isFreeMode ? "panier" : "fichier"}${s.dunks > 1 ? "s" : ""} dunké${s.dunks > 1 ? "s" : ""}`,
+          title: `Session terminée : ${s.dunks} ${isFreeMode ? "panier" : "fichier"}${s.dunks > 1 ? "s" : ""} dunké${s.dunks > 1 ? "s" : ""}`,
           body: `${s.score} pts · meilleur streak ${s.best} · ${s.swishes} swishs · ${Math.floor(durationSeconds / 60)}m ${durationSeconds % 60}s`,
         });
       } else {

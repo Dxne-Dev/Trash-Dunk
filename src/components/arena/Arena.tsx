@@ -980,6 +980,13 @@ export function Arena({
           return;
         }
 
+        // En mode Web (site public)
+        if (summary) {
+          sfx.play("ui");
+          d.dismissSummary();
+          return;
+        }
+
         if (queueRef.current.length) {
           sfx.play("error");
           G.phase = "idle";
@@ -997,7 +1004,7 @@ export function Arena({
     };
     window.addEventListener("keydown", k);
     return () => window.removeEventListener("keydown", k);
-  }, [G, d, resetColorState]);
+  }, [G, d, resetColorState, summary]);
 
   const mult = comboMultiplier(streak);
   const accuracy = shots ? Math.round((swishes / shots) * 100) : 0;
@@ -1433,27 +1440,45 @@ export function Arena({
                 />
               </div>
               <div className="mt-6 flex flex-wrap gap-2.5">
-                {!summary.isFreeMode && (
+                {/* Mode Desktop avec suppression réelle : ouvrir la corbeille */}
+                {typeof window !== "undefined" && "__TAURI_INTERNALS__" in window && !summary.isFreeMode && (
                   <button
                     type="button"
                     onClick={() => {
                       sfx.play("ui");
                       d.dismissSummary();
-                      if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
-                        invoke("open_recycle_bin");
-                        invoke("close_overlay");
-                      }
+                      invoke("open_recycle_bin");
+                      invoke("close_overlay");
                     }}
                     className="flex-1 cursor-pointer rounded-lg bg-swish/20 border border-swish/50 px-4 py-3 text-xs font-bold text-swish transition hover:bg-swish/30 active:scale-95"
                   >
                     🗑️ Ouvrir la corbeille
                   </button>
                 )}
+
+                {/* Mode Web (site public) : bouton direct pour recharger 5 fichiers */}
+                {!(typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sfx.play("ui");
+                      d.dismissSummary();
+                      d.refill(5);
+                    }}
+                    className="flex-1 cursor-pointer rounded-lg bg-swish/20 border border-swish/50 px-4 py-3 text-xs font-bold text-swish transition hover:bg-swish/30 active:scale-95"
+                  >
+                    🏀 Charger 5 fichiers
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => {
-                    // Déclenche exactement le même flux que la touche ESC
-                    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+                    sfx.play("ui");
+                    d.dismissSummary();
+                    if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+                      invoke("close_overlay");
+                    }
                   }}
                   className="flex-1 cursor-pointer rounded-lg bg-dunk-500 px-5 py-3 text-xs font-bold text-white transition hover:bg-dunk-400 active:scale-95 shadow-lg shadow-dunk-500/20"
                 >

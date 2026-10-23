@@ -17,7 +17,7 @@ export function LevelFailedModal({
 
   return (
     <div
-      className="pointer-events-auto absolute inset-0 z-40 flex items-center justify-center bg-black/80 p-6 backdrop-blur-md animate-in zoom-in-95"
+      className="pointer-events-auto absolute inset-0 z-50 flex items-center justify-center bg-black/80 p-6 backdrop-blur-md animate-in zoom-in-95"
       onPointerDown={(e) => e.stopPropagation()}
       onPointerUp={(e) => e.stopPropagation()}
     >

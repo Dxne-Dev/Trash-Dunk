@@ -226,6 +226,8 @@ export function Arena({
   }).current;
 
   const diffRef = useRef(1);
+  const summaryRef = useRef(summary);
+  summaryRef.current = summary;
 
   streakRef.current = streak;
   queueRef.current = queue;
@@ -849,6 +851,14 @@ export function Arena({
     };
 
     const down = (e: PointerEvent) => {
+      // Bloquer strictement tout tir si le camp d'entraînement est terminé/échoué ou si un modal est ouvert
+      if (d.isFreeMode && levelModalStateRef.current !== "playing") return;
+      if (summaryRef.current) return;
+      const target = e.target as HTMLElement | null;
+      if (target && target.closest("button, [role='dialog'], .pointer-events-auto")) {
+        return;
+      }
+
       if (!shownRef.current || G.phase !== "idle") return;
       sfx.unlock();
       const p = local(e);
@@ -1313,129 +1323,6 @@ export function Arena({
               </div>
             )}
 
-            {/* HUD Mini-Jeu Mode Entraînement */}
-            {d.isFreeMode && levelModalState === "playing" && (
-              <TrainingHUD
-                levelIndex={levelIndex}
-                basketsInLevel={levelBaskets}
-                swishesInLevel={levelSwishes}
-                streakInLevel={levelStreak}
-                coldTriggered={levelCold}
-                timeLeft={timeLeft}
-                onQuit={() => {
-                  window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-                }}
-              />
-            )}
-
-            {/* Modal Succès Niveau */}
-            {d.isFreeMode && levelModalState === "complete" && (
-              <LevelCompleteModal
-                levelIndex={levelIndex}
-                timeSpent={Math.max(1, Math.round((Date.now() - levelStartTimeRef.current) / 1000))}
-                score={score}
-                onNextLevel={() => {
-                  sfx.play("ui");
-                  startLevel(levelIndex + 1);
-                }}
-                onReplay={() => {
-                  sfx.play("ui");
-                  startLevel(levelIndex);
-                }}
-                onQuit={() => {
-                  window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-                }}
-              />
-            )}
-
-            {/* Modal Échec Niveau */}
-            {d.isFreeMode && levelModalState === "failed" && (
-              <LevelFailedModal
-                levelIndex={levelIndex}
-                reason={levelFailReason}
-                onRetry={() => {
-                  sfx.play("ui");
-                  startLevel(0);
-                }}
-                onQuit={() => {
-                  window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-                }}
-              />
-            )}
-
-            {/* fin de session */}
-            {summary && (
-              <div
-                className="pointer-events-auto absolute inset-0 z-30 flex items-center justify-center bg-black/75 p-6 backdrop-blur-md"
-                onPointerDown={(e) => e.stopPropagation()}
-                onPointerUp={(e) => e.stopPropagation()}
-              >
-                <div className="anim-pop w-full max-w-md rounded-2xl border border-arena-600 bg-arena-950 p-6 shadow-2xl text-center">
-                  <div className="display text-[13px] tracking-[0.28em] text-dunk-400 uppercase">
-                    {summary.isFreeMode ? "Entraînement terminé" : "Session terminée"}
-                  </div>
-                  <div className="display mt-2 text-[44px] leading-none text-chalk">
-                    {summary.isFreeMode ? (
-                      <>
-                        {summary.dunks} <span className="text-swish">panier{summary.dunks > 1 ? "s" : ""} réussi{summary.dunks > 1 ? "s" : ""}</span>
-                      </>
-                    ) : (
-                      <>
-                        {summary.dunks} <span className="text-swish">fichier{summary.dunks > 1 ? "s" : ""} supprimé{summary.dunks > 1 ? "s" : ""}</span>
-                      </>
-                    )}
-                  </div>
-                  <p className="mt-2 text-xs text-chalk-dim">
-                    {summary.isFreeMode
-                      ? "Mode sans fichier : aucun fichier sur votre disque n'a été affecté."
-                      : `Envoyé${summary.dunks > 1 ? "s" : ""} dans la corbeille Windows native. Récupérable${summary.dunks > 1 ? "s" : ""} à tout moment.`}
-                  </p>
-                  <div className="mt-5 grid grid-cols-3 gap-2 overflow-hidden rounded-lg border border-arena-800 bg-arena-900/80 p-2">
-                    <Mini label="Swishs réussis" value={`${summary.swishes ?? swishes}`} />
-                    <Mini label="Score total" value={(summary.score ?? score).toLocaleString("fr-FR")} />
-                    <Mini
-                      label="Temps de jeu"
-                      value={
-                        summary.durationSeconds !== undefined
-                          ? summary.durationSeconds >= 60
-                            ? `${Math.floor(summary.durationSeconds / 60)}m ${summary.durationSeconds % 60}s`
-                            : `${summary.durationSeconds}s`
-                          : "—"
-                      }
-                    />
-                  </div>
-                  <div className="mt-6 flex flex-wrap gap-2.5">
-                    {!summary.isFreeMode && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          sfx.play("ui");
-                          d.dismissSummary();
-                          if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
-                            invoke("open_recycle_bin");
-                            invoke("close_overlay");
-                          }
-                        }}
-                        className="flex-1 cursor-pointer rounded-lg bg-swish/20 border border-swish/50 px-4 py-3 text-xs font-bold text-swish transition hover:bg-swish/30 active:scale-95"
-                      >
-                        🗑️ Ouvrir la corbeille
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        // Déclenche exactement le même flux que la touche ESC
-                        window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
-                      }}
-                      className="flex-1 cursor-pointer rounded-lg bg-dunk-500 px-5 py-3 text-xs font-bold text-white transition hover:bg-dunk-400 active:scale-95 shadow-lg shadow-dunk-500/20"
-                    >
-                      {summary.isFreeMode ? "Confirmer et fermer [Échap]" : "Fermer [Échap]"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* pas d'écran "vide" en mode desktop */}
             {!transparent && !shownFile && !summary && !(queue.length === 0 && (trashed.length > 0 || skipped > 0)) && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4 bg-arena-950/70 p-6 text-center backdrop-blur-[2px]">
@@ -1457,6 +1344,129 @@ export function Arena({
             )}
           </div>
         </div>
+
+        {/* ---------- HUD & MODALES (en dehors de fieldRef pour isolation absolue de la souris) ---------- */}
+        {d.isFreeMode && levelModalState === "playing" && (
+          <TrainingHUD
+            levelIndex={levelIndex}
+            basketsInLevel={levelBaskets}
+            swishesInLevel={levelSwishes}
+            streakInLevel={levelStreak}
+            coldTriggered={levelCold}
+            timeLeft={timeLeft}
+            onQuit={() => {
+              window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+            }}
+          />
+        )}
+
+        {/* Modal Succès Niveau */}
+        {d.isFreeMode && levelModalState === "complete" && (
+          <LevelCompleteModal
+            levelIndex={levelIndex}
+            timeSpent={Math.max(1, Math.round((Date.now() - levelStartTimeRef.current) / 1000))}
+            score={score}
+            onNextLevel={() => {
+              sfx.play("ui");
+              startLevel(levelIndex + 1);
+            }}
+            onReplay={() => {
+              sfx.play("ui");
+              startLevel(levelIndex);
+            }}
+            onQuit={() => {
+              window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+            }}
+          />
+        )}
+
+        {/* Modal Échec Niveau */}
+        {d.isFreeMode && levelModalState === "failed" && (
+          <LevelFailedModal
+            levelIndex={levelIndex}
+            reason={levelFailReason}
+            onRetry={() => {
+              sfx.play("ui");
+              startLevel(0);
+            }}
+            onQuit={() => {
+              window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+            }}
+          />
+        )}
+
+        {/* fin de session */}
+        {summary && (
+          <div
+            className="pointer-events-auto absolute inset-0 z-50 flex items-center justify-center bg-black/75 p-6 backdrop-blur-md"
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
+          >
+            <div className="anim-pop w-full max-w-md rounded-2xl border border-arena-600 bg-arena-950 p-6 shadow-2xl text-center">
+              <div className="display text-[13px] tracking-[0.28em] text-dunk-400 uppercase">
+                {summary.isFreeMode ? "Entraînement terminé" : "Session terminée"}
+              </div>
+              <div className="display mt-2 text-[44px] leading-none text-chalk">
+                {summary.isFreeMode ? (
+                  <>
+                    {summary.dunks} <span className="text-swish">panier{summary.dunks > 1 ? "s" : ""} réussi{summary.dunks > 1 ? "s" : ""}</span>
+                  </>
+                ) : (
+                  <>
+                    {summary.dunks} <span className="text-swish">fichier{summary.dunks > 1 ? "s" : ""} supprimé{summary.dunks > 1 ? "s" : ""}</span>
+                  </>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-chalk-dim">
+                {summary.isFreeMode
+                  ? "Mode sans fichier : aucun fichier sur votre disque n'a été affecté."
+                  : `Envoyé${summary.dunks > 1 ? "s" : ""} dans la corbeille Windows native. Récupérable${summary.dunks > 1 ? "s" : ""} à tout moment.`}
+              </p>
+              <div className="mt-5 grid grid-cols-3 gap-2 overflow-hidden rounded-lg border border-arena-800 bg-arena-900/80 p-2">
+                <Mini label="Swishs réussis" value={`${summary.swishes ?? swishes}`} />
+                <Mini label="Score total" value={(summary.score ?? score).toLocaleString("fr-FR")} />
+                <Mini
+                  label="Temps de jeu"
+                  value={
+                    summary.durationSeconds !== undefined
+                      ? summary.durationSeconds >= 60
+                        ? `${Math.floor(summary.durationSeconds / 60)}m ${summary.durationSeconds % 60}s`
+                        : `${summary.durationSeconds}s`
+                      : "—"
+                  }
+                />
+              </div>
+              <div className="mt-6 flex flex-wrap gap-2.5">
+                {!summary.isFreeMode && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sfx.play("ui");
+                      d.dismissSummary();
+                      if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+                        invoke("open_recycle_bin");
+                        invoke("close_overlay");
+                      }
+                    }}
+                    className="flex-1 cursor-pointer rounded-lg bg-swish/20 border border-swish/50 px-4 py-3 text-xs font-bold text-swish transition hover:bg-swish/30 active:scale-95"
+                  >
+                    🗑️ Ouvrir la corbeille
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Déclenche exactement le même flux que la touche ESC
+                    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+                  }}
+                  className="flex-1 cursor-pointer rounded-lg bg-dunk-500 px-5 py-3 text-xs font-bold text-white transition hover:bg-dunk-400 active:scale-95 shadow-lg shadow-dunk-500/20"
+                >
+                  {summary.isFreeMode ? "Confirmer et fermer [Échap]" : "Fermer [Échap]"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ---------- CONTRÔLES (simplifié en mode transparent : juste la file d'attente) ---------- */}
         <div

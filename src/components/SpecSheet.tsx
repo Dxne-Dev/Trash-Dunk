@@ -144,7 +144,7 @@ const STACK: Array<[string, string, string]> = [
   ["Configuration", "JSON local", "%appdata%\\TrashDunk\\config.json — simple, pas de base de données pour les réglages."],
   ["Son", "NAudio / MediaPlayer", "Swoosh, buzzer, filet, ambiance de salle."],
   ["Stats & historique", "SQLite", "Streaks, total de dunks, précision par palier, classement mensuel local."],
-  ["Distribution", "Inno Setup", "Installeur classique ou .exe portable, désinscription des verbes à la désinstallation."],
+  ["Distribution", "Inno Setup", "Installeur classique Windows, désinscription des verbes à la désinstallation."],
 ];
 
 export function SpecSheet() {

@@ -104,31 +104,8 @@ export function Download() {
                     <path d="M12 3v12M7 11l5 5 5-5M4 20h16" />
                   </svg>
                   <span>
-                    <span className="display block text-[24px] leading-none text-white">Installer .exe</span>
-                    <span className="block text-[11px] text-white/75">8,9 Mo · Exécutable Windows x64 · Démo & Shell</span>
-                  </span>
-                </a>
-
-                <a
-                  href={RELEASE_EXE_URL}
-                  onClick={() => {
-                    sfx.play("drop");
-                    pushToast({
-                      app: "TrashDunk",
-                      tone: "swish",
-                      title: "Téléchargement lancé 🏀",
-                      body: "Version portable TrashDunk.exe en cours de téléchargement !",
-                    });
-                  }}
-                  className="flex items-center gap-3 rounded-lg border border-arena-600 bg-arena-950/70 px-5 py-4 text-left transition hover:border-chalk/40 hover:bg-arena-850 active:scale-[.98]"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#bdb4a2" strokeWidth="1.9" strokeLinecap="round">
-                    <rect x="3" y="7" width="18" height="13" rx="2" />
-                    <path d="M8 7V5h8v2M3 12h18" />
-                  </svg>
-                  <span>
-                    <span className="display block text-[22px] leading-none text-chalk">Portable</span>
-                    <span className="block text-[11px] text-chalk-dim">8,9 Mo · Standalone sans installation</span>
+                    <span className="display block text-[24px] leading-none text-white">Télécharger pour Windows</span>
+                    <span className="block text-[11px] text-white/75">8,9 Mo · Exécutable Windows x64 (.exe)</span>
                   </span>
                 </a>
               </div>

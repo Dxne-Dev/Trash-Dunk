@@ -7,6 +7,7 @@ import { Roadmap } from "@/components/Roadmap";
 import { SpecSheet } from "@/components/SpecSheet";
 import { Trigger } from "@/components/Trigger";
 import { DunkProvider } from "@/state/dunk";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const RIBBON_TOP = [
   "Dunk it",
@@ -20,41 +21,42 @@ const RIBBON_TOP = [
 ];
 
 const RIBBON_TECH = [
-  "C# · .NET 8",
-  "WPF overlay topmost",
-  "Verbe shell",
-  "SQLite stats",
-  "NAudio",
-  "Inno Setup",
+  "Tauri v2 · Rust",
+  "React 19 · Vite",
+  "Overlay topmost transparent",
+  "Verbe shell Windows",
+  "trash-rs Corbeille",
   "Zéro télémétrie",
-  "4,2 Mo",
+  "Léger & rapide",
 ];
 
 export default function App() {
   return (
-    <DunkProvider>
-      <div id="top" className="relative min-h-screen">
-        <div className="arena-bg" aria-hidden />
-        <div className="arena-lines" aria-hidden />
-        <div className="noise-layer" aria-hidden />
+    <ErrorBoundary>
+      <DunkProvider>
+        <div id="top" className="relative min-h-screen">
+          <div className="arena-bg" aria-hidden />
+          <div className="arena-lines" aria-hidden />
+          <div className="noise-layer" aria-hidden />
 
-        <Nav />
+          <Nav />
 
-        <main className="relative">
-          <Ribbon items={RIBBON_TOP} tone="orange" />
-          <Opener />
-          <Ribbon items={RIBBON_TECH} reverse />
-          <Trigger />
-          <MeterAnatomy />
-          <Playbook />
-          <Roadmap />
-          <SpecSheet />
-          <Download />
-        </main>
+          <main className="relative">
+            <Ribbon items={RIBBON_TOP} tone="orange" />
+            <Opener />
+            <Ribbon items={RIBBON_TECH} reverse />
+            <Trigger />
+            <MeterAnatomy />
+            <Playbook />
+            <Roadmap />
+            <SpecSheet />
+            <Download />
+          </main>
 
-        <Footer />
-        <Toaster />
-      </div>
-    </DunkProvider>
+          <Footer />
+          <Toaster />
+        </div>
+      </DunkProvider>
+    </ErrorBoundary>
   );
 }

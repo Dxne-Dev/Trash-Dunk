@@ -26,8 +26,8 @@ export const EXT_META: Record<string, ExtMeta> = {
   log: { label: "LOG", fg: "#f0f0f0", bg: "#4c4c58" },
 };
 
-export const extMeta = (ext: string): ExtMeta =>
-  EXT_META[ext.toLowerCase()] ?? { label: "FIL", fg: "#f0f0f0", bg: "#5a6470" };
+export const extMeta = (ext?: string | null): ExtMeta =>
+  EXT_META[(ext ?? "").toLowerCase()] ?? { label: "FIL", fg: "#f0f0f0", bg: "#5a6470" };
 
 let counter = 0;
 export const uid = () => `f${Date.now().toString(36)}${(counter++).toString(36)}`;
@@ -71,17 +71,33 @@ export const FILE_LIBRARY: Array<[string, string, number]> = [
 ];
 
 export const randomFiles = (n: number, exclude: string[] = []): DunkFile[] => {
-  const pool = FILE_LIBRARY.filter(([name]) => !exclude.includes(name));
+  if (n <= 0) return [];
+
+  // Filtrer les fichiers pour éviter les doublons directs avec la file actuelle
+  let pool = FILE_LIBRARY.filter(([name]) => !exclude.includes(name));
+
+  // Si la réserve restante est inférieure au nombre demandé, on réutilise toute la bibliothèque
+  if (pool.length < n) {
+    pool = [...FILE_LIBRARY];
+  }
+
   const out: DunkFile[] = [];
-  const used = new Set<number>();
-  let guard = 0;
-  while (out.length < n && guard++ < 400) {
-    const i = Math.floor(Math.random() * pool.length);
-    if (used.has(i)) continue;
-    used.add(i);
-    const [name, ext, sizeKb] = pool[i];
+  const shuffled = [...pool].sort(() => Math.random() - 0.5);
+
+  for (let i = 0; i < n; i++) {
+    const item = shuffled[i % shuffled.length];
+    if (!item) continue;
+    const [baseName, ext, sizeKb] = item;
+
+    // Gestion propre des suffixes si le nom est déjà présent
+    const count =
+      exclude.filter((name) => name === baseName || name.startsWith(`${baseName} (`)).length +
+      out.filter((f) => f.name === baseName || f.name.startsWith(`${baseName} (`)).length;
+
+    const name = count > 0 ? `${baseName} (${count + 1})` : baseName;
     out.push(makeFile(name, ext, sizeKb));
   }
+
   return out;
 };
 

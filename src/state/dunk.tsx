@@ -267,12 +267,23 @@ export function DunkProvider({
   const refill = useCallback(
     (n = 5) => {
       startSessionIfNeeded();
-      startTimeRef.current = Date.now();
-      const exclude = queue.map((f) => f.name);
-      setQueue((q) => [...q, ...randomFiles(n, exclude)]);
+      setQueue((q) => {
+        if (q.length >= 25) {
+          pushToast({
+            app: "TrashDunk",
+            tone: "info",
+            title: "File pleine",
+            body: "Vous avez déjà 25 fichiers en attente. Dunkez ou passez-les !",
+          });
+          return q;
+        }
+        const needed = Math.min(n, 25 - q.length);
+        const exclude = q.map((f) => f.name);
+        return [...q, ...randomFiles(needed, exclude)];
+      });
       setPulse((p) => p + 1);
     },
-    [queue, startSessionIfNeeded]
+    [startSessionIfNeeded, pushToast]
   );
 
   const registerShot = useCallback(

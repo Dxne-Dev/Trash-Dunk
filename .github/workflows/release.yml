@@ -19,21 +19,21 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "TrashDunk v1.0.0 — Premier shoot sur Windows 🏀"
+          name: "TrashDunk ${{ github.ref_name }} 🏀"
           tag_name: ${{ github.ref_name }}
           files: |
             dist-desktop/TrashDunk.exe
           body: |
-            ## 🏀 TrashDunk v1.0.0
+            ## 🏀 TrashDunk ${{ github.ref_name }}
 
-            Première version officielle de **TrashDunk**, l'utilitaire qui transforme la suppression de fichier sous Windows en véritable mini-jeu de basket !
+            Dernière version officielle de **TrashDunk** pour Windows 10 & 11 !
 
-            ### ✨ Fonctionnalités :
-            - 🖱️ **Intégration Explorateur Windows :** Verbe de clic droit « Dunk it 🏀 » et raccourci clavier `Ctrl + Maj + D`.
-            - 🎯 **Mini-Jeu de Shoot :** Traction, jauge de timing oscillante et tir en parabole.
-            - 🗑️ **Sécurité totale :** En cas de Swish réussi, le fichier est déplacé dans la corbeille Windows standard (restauration possible). En cas d'échec ou avec la touche Échap, le fichier reste intact sur votre bureau.
-            - ❄️ **Célébration COLD :** Double swish consécutif avec gel de l'écran et sticker exclusif !
-            - 🔥 **Sunset Glow :** Triple panier consécutif avec bonus et multiplicateurs de streak.
+            ### ✨ Nouveautés & Fonctionnalités :
+            - 🏆 **Camp d'entraînement :** Mini-jeu progressif en 5 niveaux avec objectifs, chronomètre et HUD.
+            - 📁 **Support complet des dossiers :** Envoyez des répertoires entiers au panier via le clic droit.
+            - 🏀 **Multi-sélection Windows :** Accumulation transparente de plusieurs fichiers sélectionnés en un seul shoot.
+            - ⚙️ **Barre des tâches & Veille :** Persistance discrète en tâche de fond dans la zone de notification.
+            - 🗑️ **Corbeille native :** Suppression sécurisée réversible via l'API Win32 Recycle Bin.
 
             ### 📦 Téléchargement direct :
-            Téléchargez le fichier `TrashDunk.exe` ci-dessous et lancez-le directement.
+            Téléchargez `TrashDunk.exe` ci-dessous et lancez-le directement.

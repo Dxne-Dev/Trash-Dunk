@@ -16,7 +16,7 @@ export function Download() {
   const { pushToast } = useDunk();
   const [copied, setCopied] = useState(false);
 
-  const RELEASE_EXE_URL = "https://github.com/Dxne-Dev/Trash-Dunk/releases/download/v1.0.0/TrashDunk.exe";
+  const RELEASE_EXE_URL = "https://github.com/Dxne-Dev/Trash-Dunk/releases/latest/download/TrashDunk.exe";
 
   const downloadExe = () => {
     sfx.play("drop");

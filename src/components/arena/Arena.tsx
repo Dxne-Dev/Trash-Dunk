@@ -851,6 +851,9 @@ export function Arena({
     };
 
     const down = (e: PointerEvent) => {
+      // Seul le clic gauche principal déclenche le tir (évite les tirs involontaires au clic droit)
+      if (e.button !== 0) return;
+
       // Si une modale est affichée (camp d'entraînement terminé/échoué ou fin de session), interdire tout tir
       if (d.isFreeMode && levelModalStateRef.current !== "playing") return;
       if (summaryRef.current) return;
@@ -902,13 +905,25 @@ export function Arena({
       shoot();
     };
 
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      // Si le joueur était en train de viser, le clic droit annule le tir proprement
+      if (G.phase === "aim") {
+        G.phase = "return";
+        G.ret = { from: { ...G.ball }, t: 0, dur: 0.25, s0: G.scale };
+        setPhase("return");
+      }
+    };
+
     el.addEventListener("pointerdown", down);
     el.addEventListener("pointermove", move);
+    el.addEventListener("contextmenu", handleContextMenu);
     window.addEventListener("pointerup", up);
     window.addEventListener("pointercancel", up);
     return () => {
       el.removeEventListener("pointerdown", down);
       el.removeEventListener("pointermove", move);
+      el.removeEventListener("contextmenu", handleContextMenu);
       window.removeEventListener("pointerup", up);
       window.removeEventListener("pointercancel", up);
     };
@@ -1028,7 +1043,11 @@ export function Arena({
     : null;
 
   return (
-    <section id="dunker" className="relative z-10 mx-auto w-full max-w-[1240px] px-4 pb-14 sm:px-6">
+    <section
+      id="dunker"
+      onContextMenu={(e) => e.preventDefault()}
+      className="relative z-10 mx-auto w-full max-w-[1240px] px-4 pb-14 sm:px-6"
+    >
       <div
         className={`relative overflow-hidden rounded-[20px] transition-shadow duration-500 ${
           transparent

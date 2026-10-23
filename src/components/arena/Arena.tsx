@@ -851,13 +851,9 @@ export function Arena({
     };
 
     const down = (e: PointerEvent) => {
-      // Bloquer strictement tout tir si le camp d'entraînement est terminé/échoué ou si un modal est ouvert
+      // Si une modale est affichée (camp d'entraînement terminé/échoué ou fin de session), interdire tout tir
       if (d.isFreeMode && levelModalStateRef.current !== "playing") return;
       if (summaryRef.current) return;
-      const target = e.target as HTMLElement | null;
-      if (target && target.closest("button, [role='dialog'], .pointer-events-auto")) {
-        return;
-      }
 
       if (!shownRef.current || G.phase !== "idle") return;
       sfx.unlock();

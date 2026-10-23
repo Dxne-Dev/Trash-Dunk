@@ -376,7 +376,7 @@ export function Footer() {
               un tir réussi envoie le fichier dans la corbeille native, un tir raté ne touche à rien.
             </p>
             <div className="mt-4 flex flex-wrap gap-1.5">
-              {["C# · .NET 8", "WPF", "Shell Extension", "SQLite", "Inno Setup"].map((t) => (
+              {["Tauri v2", "Rust", "React 19", "TypeScript", "Shell Extension"].map((t) => (
                 <span key={t} className="rounded border border-arena-700 bg-arena-900 px-2 py-1 text-[10px] font-medium text-chalk-dim/85">
                   {t}
                 </span>

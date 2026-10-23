@@ -60,7 +60,7 @@ const CONFIG = `
   "meter":    { "baseSpeed": 0.28, "powerScale": 0.62, "targetMin": 25, "targetMax": 90 },
   "tiers":    { "swish": 2, "bank": 8, "rim": 15, "rimIsCoinFlip": true },
   "scoring":  { "swish": 100, "bank": 60, "lucky": 40, "powerBonus": 0.65, "comboAt": [3, 5, 7, 10] },
-  "audio":    { "enabled": true, "volume": 0.5, "engine": "NAudio" },
+  "audio":    { "enabled": true, "volume": 0.5, "engine": "WebAudio" },
   "shell":    { "verb": "Dunk it", "hotkey": "Ctrl+Shift+D", "multiSelect": true },
   "safety":   { "recycleBinOnly": true, "neverPermanent": true, "confirmOnFolders": true }
 }`;
@@ -105,46 +105,39 @@ CREATE INDEX idx_shots_month  ON shots(substr(created_at, 1, 7));
 
 -- 1 284 tirs · 61,3 % de réussite · record streak 17 · 402 swishs`;
 
-const CS = `
+const RS = `
 // Un dunk réussi n'est JAMAIS une suppression définitive.
-using Microsoft.VisualBasic.FileIO;
+// src-tauri/src/lib.rs · Intégration Corbeille Windows native via trash-rs
 
-public static class Recycler
-{
-    public static void DunkToRecycleBin(string path)
-    {
-        if (File.Exists(path))
-            FileSystem.DeleteFile(
-                path,
-                UIOption.OnlyErrorDialogs,
-                RecycleOption.SendToRecycleBin,
-                UICancelOption.DoNothing);
-        else if (Directory.Exists(path))
-            FileSystem.DeleteDirectory(
-                path,
-                UIOption.OnlyErrorDialogs,
-                RecycleOption.SendToRecycleBin);
+#[tauri::command]
+fn send_to_recycle_bin(path: String) -> Result<(), String> {
+    let p = std::path::Path::new(&path);
+    if p.exists() {
+        trash::delete(p).map_err(|e| e.to_string())?;
     }
+    Ok(())
+}
 
-    // air ball => on ne touche à rien, le fichier reste exactement où il était
-    public static void AirBall(string path) => Log.Miss(path);
+// Tir manqué / Air ball : on ne touche à rien, le fichier reste 100% intact sur le bureau.
+fn on_shot_miss(path: &str) {
+    log::info!("Tir manqué : aucun fichier affecté pour {}", path);
 }`;
 
 const TABS = [
   { id: "config", label: "config.json", path: "%appdata%\\TrashDunk\\config.json", lang: "json" as const, code: CONFIG },
-  { id: "reg", label: "Registre", path: "HKEY_CLASSES_ROOT\\*\\shell\\TrashDunk", lang: "reg" as const, code: REGISTRY },
+  { id: "reg", label: "Registre", path: "HKEY_CURRENT_USER\\Software\\Classes\\*\\shell\\TrashDunk", lang: "reg" as const, code: REGISTRY },
+  { id: "rs", label: "lib.rs", path: "src-tauri\\src\\lib.rs", lang: "cs" as const, code: RS },
   { id: "sql", label: "stats.sqlite", path: "%appdata%\\TrashDunk\\stats.sqlite", lang: "sql" as const, code: STATS },
-  { id: "cs", label: "Recycler.cs", path: "src\\Shell\\Recycler.cs", lang: "cs" as const, code: CS },
 ];
 
 const STACK: Array<[string, string, string]> = [
-  ["Langage", "C# · .NET 8", "Natif Windows, bonne intégration Shell, perf correcte."],
-  ["UI / rendu", "WPF", "Fenêtres transparentes et overlays faciles, animations via Storyboard, pas de moteur de jeu complet."],
-  ["Intégration Explorateur", "Context Menu Handler", "Verbe custom dans le registre. Additif : la corbeille native reste intacte."],
-  ["Configuration", "JSON local", "%appdata%\\TrashDunk\\config.json — simple, pas de base de données pour les réglages."],
-  ["Son", "NAudio / MediaPlayer", "Swoosh, buzzer, filet, ambiance de salle."],
-  ["Stats & historique", "SQLite", "Streaks, total de dunks, précision par palier, classement mensuel local."],
-  ["Distribution", "Inno Setup", "Installeur classique Windows, désinscription des verbes à la désinstallation."],
+  ["Architecture", "Tauri v2 + Rust", "Binaire natif x64, ultra-léger (~8 Mo), intégration système Windows sécurisée."],
+  ["UI / Rendu", "React 19 + Tailwind", "Overlays transparents 60 FPS, Canvas 2D pour les particules, animations fluides."],
+  ["Intégration Explorateur", "Menu contextuel Windows", "Verbe « Dunk it 🏀 » natif dans le registre HKCU. La corbeille Windows reste intacte."],
+  ["Corbeille & Fichiers", "trash-rs (Win32 API)", "Envoi direct dans la vraie corbeille Windows via les API système natives, restaurable à tout moment."],
+  ["Audio", "Web Audio API", "Swoosh, buzzer, filet, ambiance sonore synthétisée zéro-latence."],
+  ["Processus & Tray", "System Tray & Single-Instance", "Veille silencieuse en barre des tâches sans saturer les ressources, gestion multi-fichiers."],
+  ["Distribution", "Exécutable autonome", "Binaire Windows x64 prêt à l'emploi, sans runtime externe requis."],
 ];
 
 export function SpecSheet() {
@@ -160,15 +153,14 @@ export function SpecSheet() {
           accent="#6fd3ff"
           title={
             <>
-              Du C#, du WPF
+              Du Rust, du React
               <br />
-              <span className="stroke-text">et trois clés de registre.</span>
+              <span className="stroke-text">et l'API native de Windows.</span>
             </>
           }
         >
           <p className="text-[15px] leading-relaxed text-chalk-dim">
-            Pas de moteur de jeu, pas de service cloud, pas de driver. Une fenêtre transparente, un verbe shell,
-            un fichier de config et une petite base SQLite pour les stats.
+            Pas de moteur de jeu lourd, pas de service cloud, pas de télémétrie. Une fenêtre transparente Tauri, un verbe shell dans l'Explorateur et la vraie Corbeille Windows.
           </p>
         </SectionHead>
       </Reveal>

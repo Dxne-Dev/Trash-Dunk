@@ -19,7 +19,7 @@ export function Opener() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-dunk-500 opacity-75" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-dunk-500" />
                 </span>
-                Utilitaire Windows · C# / WPF
+                Utilitaire Windows · Rust / Tauri v2
               </span>
               <span className="rounded-full border border-swish/45 bg-swish/10 px-3 py-1.5 text-[10.5px] font-semibold tracking-[0.18em] text-swish uppercase">
                 Démo jouable ici

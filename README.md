@@ -63,7 +63,7 @@ Le fichier devient le ballon de basket. Cliquez et glissez vers le bas pour char
 Testez immédiatement le jeu, la physique du ballon, les combos et les bruitages directement dans votre navigateur web sans rien installer :
 👉 **[Accéder à la démo en ligne TrashDunk](https://dxne-dev.github.io/Trash-Dunk/)**
 
-### 2. Version Native Windows (Tauri & .NET)
+### 2. Version Native Windows (Tauri v2 & Rust)
 - Intégration dans le menu contextuel clic droit de Windows (`HKEY_CURRENT_USER\Software\Classes\*\shell\TrashDunk`).
 - Rendu visuel 100% fidèle avec les effets de shaders, particules, confettis et sticker COLD.
 - Suppression réelle vers la corbeille native via l'API Win32 Recycle Bin (`trash::delete`).

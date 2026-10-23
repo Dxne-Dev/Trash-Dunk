@@ -34,7 +34,7 @@ const STEPS: Step[] = [
     n: "02",
     tag: "Overlay",
     title: "Fenêtre transparente, toujours dessus",
-    text: "Une fenêtre WPF plein écran, Topmost, fond transparent : le bureau reste visible pendant que le terrain se pose par-dessus.",
+    text: "Une fenêtre Tauri/Rust plein écran, Topmost, fond transparent : le bureau reste visible pendant que le terrain se pose par-dessus.",
     Diagram: () => (
       <svg viewBox="0 0 120 74" className="h-[74px] w-full">
         <rect x="8" y="8" width="104" height="58" rx="3" className="text-arena-600" {...line} />

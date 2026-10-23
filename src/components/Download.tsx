@@ -5,8 +5,8 @@ import { Reveal } from "./Chrome";
 
 const REQ: Array<[string, string]> = [
   ["Système", "Windows 10 / 11 · x64"],
-  ["Runtime", ".NET 8 Desktop Runtime"],
-  ["Poids", "4,2 Mo · hors ligne"],
+  ["Runtime", "Aucun (Binaire natif Rust & WebView2)"],
+  ["Poids", "8,9 Mo · hors ligne"],
   ["Permissions", "Aucune élévation requise"],
   ["Réseau", "Jamais. Zéro télémétrie."],
   ["Désinstallation", "Verbes shell retirés proprement"],
@@ -81,7 +81,7 @@ export function Download() {
               </h2>
 
               <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-chalk-dim">
-                Un installeur de 4 Mo qui ajoute un verbe au clic droit, pose un overlay WPF et ne parle jamais
+                Un exécutable de 8 Mo qui ajoute un verbe au clic droit, pose un overlay transparent haute performance et ne parle jamais
                 à Internet. La corbeille Windows reste la seule destination possible.
               </p>
 

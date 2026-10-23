@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { sfx } from "@/lib/audio";
 import { useDunk } from "@/state/dunk";
 import { Reveal } from "./Chrome";
@@ -14,32 +13,8 @@ const REQ: Array<[string, string]> = [
 
 export function Download() {
   const { pushToast } = useDunk();
-  const [copied, setCopied] = useState(false);
 
   const RELEASE_EXE_URL = "https://github.com/Dxne-Dev/Trash-Dunk/releases/latest/download/TrashDunk.exe";
-
-  const downloadExe = () => {
-    sfx.play("drop");
-    pushToast({
-      app: "TrashDunk",
-      tone: "swish",
-      title: "Téléchargement lancé 🏀",
-      body: "L'exécutable TrashDunk.exe se télécharge. Bon shoot !",
-    });
-    window.location.href = RELEASE_EXE_URL;
-  };
-
-  const copy = async () => {
-    const cmd = "winget install trashdunk";
-    try {
-      await navigator.clipboard.writeText(cmd);
-      setCopied(true);
-      sfx.play("drop");
-      window.setTimeout(() => setCopied(false), 2200);
-    } catch {
-      sfx.play("error");
-    }
-  };
 
   return (
     <section id="telecharger" className="relative z-10 mx-auto w-full max-w-[1240px] px-4 py-16 sm:px-6 md:py-22">
@@ -108,19 +83,6 @@ export function Download() {
                     <span className="block text-[11px] text-white/75">8,9 Mo · Exécutable Windows x64 (.exe)</span>
                   </span>
                 </a>
-              </div>
-
-              <div className="mt-5 flex items-center gap-2">
-                <div className="flex min-w-0 flex-1 items-center gap-2 rounded-md border border-arena-700 bg-arena-950/85 px-3 py-2.5">
-                  <span className="text-[12px] text-arena-500">PS&gt;</span>
-                  <code className="truncate font-mono text-[12.5px] text-swish">winget install trashdunk</code>
-                </div>
-                <button
-                  onClick={copy}
-                  className="shrink-0 rounded-md border border-arena-600 bg-arena-850 px-3 py-2.5 text-[12px] font-semibold text-chalk-dim transition hover:border-swish hover:text-swish"
-                >
-                  {copied ? "Copié ✓" : "Copier"}
-                </button>
               </div>
             </div>
 
